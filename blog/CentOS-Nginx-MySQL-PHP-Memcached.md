@@ -180,7 +180,7 @@
 
 增加执行权限
 
-    chmod 754 /etc/rc.d/init.d/mysql
+    chmod 755 /etc/rc.d/init.d/mysql
     chkconfig --add mysql
     chkconfig --level 35 mysql on
     
@@ -317,7 +317,7 @@
 ### 3.6 把 php-fpm 加入系统启动
 
     cp /usr/local/src/php-5.4.12/sapi/fpm/init.d.php-fpm /etc/rc.d/init.d/php-fpm
-    chmod 754 /etc/rc.d/init.d/php-fpm
+    chmod 755 /etc/rc.d/init.d/php-fpm
     chkconfig --add php-fpm
     chkconfig --level 35 php-fpm on
 
@@ -661,7 +661,7 @@
 
 启动脚本权限
 
-    chmod 754 /etc/rc.d/init.d/nginx
+    chmod 755 /etc/rc.d/init.d/nginx
     chkconfig --add nginx 
     chkconfig --level 35 nginx on
 
