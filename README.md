@@ -16,3 +16,7 @@ PHP 笔试题目(英文 & 中文)
 ### lnmp.sh
 
 CentOS 6.4 下安装 Nginx-1.2.7 MySQL-5.5.30 PHP-5.4.12 脚本，是 **CentOS-Nginx-MySQL-PHP-Memcached.md** 的实现。
+
+### lnmpex.sh
+
+CentOS 6.4 下安装 xtrabackup & memcached & redis & varnish & tcpdump 等。
