@@ -1,4 +1,4 @@
-**File Name** CentOS-Nginx-MySQL-PHP-Memcached.md  
+**File Name** centos-nginx-mysql-php-memcached.md  
 
 **Description** CentOS6.4下安装Nginx1.2.7-MySQL5.5.30-PHP5.4.12-Memcached1.4.15    
 **Author** LiCunchang(printf@live.com)  
