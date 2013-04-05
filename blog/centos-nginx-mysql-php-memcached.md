@@ -523,6 +523,13 @@
 
 `mkdir -p /data/web/mysql.licunchang.com` 并上传 phpmyadmin 文件到 **/data/web/mysql.licunchang.com**
     
+    mkdir -p /data/web/mysql.licunchang.com
+
+    cd /data/web/mysql.licunchang.com
+
+    chown www.www /data/web/mysql.licunchang.com  -R
+    chmod 744 /data/web/mysql.licunchang.com  -R
+    
 ### 4.5 把 nginx 加入系统启动
 
     vi /etc/rc.d/init.d/nginx
@@ -690,6 +697,13 @@
     chown www.www /data/web/www.licunchang.com  -R
     chmod 744 /data/web/www.licunchang.com  -R
 
+    mkdir -p /data/web/mysql.licunchang.com
+
+    cd /data/web/mysql.licunchang.com
+
+    chown www.www /data/web/mysql.licunchang.com  -R
+    chmod 744 /data/web/mysql.licunchang.com  -R
+
 ### 4.7 nginx 日志切割
 
     mkdir -p /data/logs/nginx/
@@ -726,7 +740,7 @@
     done
 
     #backup the error log
-    mv ${log_files_path}error.log ${log_files_path_backup}/error_$(date -d "yesterday" +"%Y%m%d").log
+    mv ${log_files_path}.error.log ${log_files_path_backup}/error_$(date -d "yesterday" +"%Y%m%d").log
 
     #delete the log over 100 days
     find $log_files_path -mtime +$save_days -exec rm -rf {} \; 
