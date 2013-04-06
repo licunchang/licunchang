@@ -133,6 +133,68 @@ redis() {
     make
     make install
 
+    mkdir -p /usr/local/redis/bin /usr/local/redis/conf
+
+    cp /usr/local/bin/redis* /usr/local/redis/bin/
+    cp /usr/local/src/redis-2.6.11/redis.conf /usr/local/redis/conf/
+    cp /usr/local/redis/conf/redis.conf /usr/local/redis/conf/redis.conf_licunchang.bak
+
+    sed -i 's/^daemonize no/daemonize yes/' /usr/local/redis/conf/redis.conf
+
+    cat > /data/scripts/redis <<'EOF'
+#!/bin/bash
+#
+# Simple Redis init.d script conceived to work on Linux systems
+# as it does use of the /proc filesystem.
+
+REDISPORT=6379
+EXEC=/usr/local/redis/bin/redis-server
+CLIEXEC=/usr/local/redis/bin/redis-cli
+
+PIDFILE=/var/run/redis.pid
+CONF="/usr/local/redis/conf/redis.conf"
+
+case "$1" in
+    start)
+        [ `netstat -tunpl | grep 6379 | wc -l` -eq 0 ] || exit 6
+        if [ -f $PIDFILE ]
+        then
+                echo "$PIDFILE exists, process is already running or crashed"
+        else
+                echo -n "Starting Redis server..."
+                $EXEC $CONF
+                if [ `netstat -tunpl | grep 6379 | wc -l` -ne 0 ]; then
+                    echo "done"
+                else
+                    echo "failed"
+                    exit 2
+                fi
+        fi
+        ;;
+    stop)
+        if [ ! -f $PIDFILE ]
+        then
+                echo "$PIDFILE does not exist, process is not running"
+        else
+                PID=$(cat $PIDFILE)
+                echo "Stopping ..."
+                $CLIEXEC -p $REDISPORT shutdown
+                while [ -x /proc/${PID} ]
+                do
+                    echo "Waiting for Redis to shutdown ..."
+                    sleep 1
+                done
+                echo "Redis stopped"
+        fi
+        ;;
+    *)
+        echo "Please use start or stop as first argument"
+        ;;
+esac
+EOF
+    
+    chmod 755 /data/scripts/redis
+
     return $?
 }
 

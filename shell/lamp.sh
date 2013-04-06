@@ -284,6 +284,8 @@ php() {
     sed -i 's#^;date.timezone =#date.timezone = Asia/Shanghai#' /usr/local/php/etc/php.ini
     sed -i 's#^expose_php = On#expose_php = Off#' /usr/local/php/etc/php.ini
 
+    /data/scripts/httpd start
+
     return #?
 }
 
@@ -406,6 +408,5 @@ fi
 #php
 if [ -d "/usr/local/src/php-5.4.12" ]; then
     php
-    /data/scripts/httpd start
 fi
 
