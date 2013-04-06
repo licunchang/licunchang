@@ -735,12 +735,12 @@
     #backup the webapp access log
     for((i=0;i<$log_files_num;i++)); do
         if [ -f ${log_files_path}${log_files_name[i]}.access.log ]; then;
-            mv ${log_files_path}${log_files_name[i]}.access.log ${log_files_path_backup}/${log_files_name[i]}.access_$(date -d "yesterday" +"%Y%m%d").log
+            mv ${log_files_path}${log_files_name[i]}.access.log ${log_files_path_backup}${log_files_name[i]}.access_$(date -d "yesterday" +"%Y%m%d").log
         fi
     done
 
     #backup the error log
-    mv ${log_files_path}.error.log ${log_files_path_backup}/error_$(date -d "yesterday" +"%Y%m%d").log
+    mv ${log_files_path}error.log ${log_files_path_backup}error_$(date -d "yesterday" +"%Y%m%d").log
 
     #delete the log over 100 days
     find $log_files_path -mtime +$save_days -exec rm -rf {} \; 
