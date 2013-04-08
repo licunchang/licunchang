@@ -7,6 +7,10 @@ LiCunchang(printf@live.com)
 
 CentOS 6.4 下安装 Nginx-1.2.7 MySQL-5.5.30 PHP-5.4.12 Memcached-1.4.15 步骤。
 
+### nginx-http-rewrite.md
+
+nginx rewrite 模块入门
+
 ### php-interview-questions-and-answers.md
 
 PHP 笔试题目(英文 & 中文)

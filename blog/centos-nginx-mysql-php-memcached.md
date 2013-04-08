@@ -415,6 +415,21 @@
             rewrite ^(.*) http://www.licunchang.com$1 permanent;
         }
 
+        # if the client didn't give a user_agent, return 412
+        if ($http_user_agent ~ ^$) {
+            return 412;
+        }
+
+        #Only allow these request methods, Do not accept DELETE, SEARCH and other methods
+        if ($request_method !~ ^(GET|HEAD|POST)$ ) {
+            return 405;
+        }
+
+        # Only requests to our Host are allowed
+        if ($host !~ ^(licunchang.com|www.licunchang.com|mysql.licunchang.com)$ ) {
+            return 444;
+        }
+        
         include /usr/local/nginx/conf/servers/*.conf;
 
     }
