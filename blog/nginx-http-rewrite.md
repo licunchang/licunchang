@@ -146,6 +146,20 @@ Example 1
 
 如果正则表达式中包含字符 `}` 或者 `;`，整个表达式应该被包含在单引号或双引号的引用中。
 
+Note that outside location blocks, `last` and `break` are effectively the same.
+
+rewrite 不对 **hostname** 或者 **query string** 进行操作，例如：
+
+    http://www.licunchang.com/user/info?id=2000&t=1361235236
+
+rewrite 只能操作 `/user/info` 这一部分，也就是变量 `$uri` 的值，要对 **query string** 也就是变量 `$query_string` 或者 `$args` 的值进行操作可以使用 `$arg_PARAMETER` 变量，比如上面的 url ，`$arg_id` 的值就是 `20000`。
+
+    location ~* ^/user/ {
+        if ($args ~* "id=\d+$") {
+            rewrite ^ $scheme://$host/userinfo.php?id=$arg_id? permanent;
+        }
+    }
+
 ### 2.5 rewrite_log
 
 > **syntax:**    `rewrite_log on | off;`  
@@ -229,3 +243,4 @@ ngx\_http\_rewrite\_module 模块的指令在解析配置阶段被编译成 ngin
 1. Module ngx\_http\_rewrite\_module [http://nginx.org/en/docs/http/ngx\_http\_rewrite\_module.html](http://nginx.org/en/docs/http/ngx_http_rewrite_module.html "Module ngx_http_rewrite_module")    
 2. ngx\_http\_rewrite\_module模块 [http://nginx.org/cn/docs/http/ngx\_http\_rewrite\_module.html](http://nginx.org/cn/docs/http/ngx_http_rewrite_module.html "ngx_http_rewrite_module模块")
 3. Nginx Rewrite研究笔记 [http://blog.cafeneko.info/2010/10/nginx\_rewrite\_note](http://blog.cafeneko.info/2010/10/nginx_rewrite_note/ "Nginx Rewrite研究笔记") 
+4. HttpCoreModule [http://wiki.nginx.org/HttpCoreModule](http://wiki.nginx.org/HttpCoreModule "HttpCoreModule") 
