@@ -271,7 +271,7 @@
 ### 3.3 创建 nginx 及 php-fpm 运行用户及用户组
     
     /usr/sbin/groupadd www
-    /usr/sbin/useradd -g www www -s /bin/false
+    /usr/sbin/useradd -M -g www www -s /bin/false
     
 ### 3.4 安装php
 
@@ -551,17 +551,17 @@
 
 开机[启动脚本](http://wiki.nginx.org/RedHatNginxInitScript)内容
 
-    #!/bin/sh
+    #!/bin/bash
     #
     # nginx - this script starts and stops the nginx daemon
     #
-    # chkconfig:   - 85 15 
-    # description:  Nginx is an HTTP(S) server, HTTP(S) reverse \
-    #               proxy and IMAP/POP3 proxy server
+    # chkconfig: 35 85 15
+    # description: Nginx is an HTTP and reverse proxy server, as well as a mail proxy server.
+    #
     # processname: nginx
-    # config:      /usr/local/nginx/conf/nginx.conf
-    # config:      /etc/sysconfig/nginx
-    # pidfile:     /usr/local/nginx/logs/nginx.pid
+    # bin:      /usr/local/nginx/sbin/nginx
+    # config:   /usr/local/nginx/conf/nginx.conf
+    # pidfile:  /usr/local/nginx/logs/nginx.pid
 
     # Source function library.
     . /etc/rc.d/init.d/functions
@@ -570,54 +570,60 @@
     . /etc/sysconfig/network
 
     # Check that networking is up.
-    [ "$NETWORKING" = "no" ] && exit 0
+    [ "${NETWORKING}" = "no" ] && exit 6
 
-    nginx="/usr/local/nginx/sbin/nginx"
-    prog=$(basename $nginx)
-
+    NGINX="/usr/local/nginx/sbin/nginx"
     NGINX_CONF_FILE="/usr/local/nginx/conf/nginx.conf"
 
-    [ -f /etc/sysconfig/nginx ] && . /etc/sysconfig/nginx
-
+    prog=$(basename $NGINX)
     lockfile=/var/lock/subsys/nginx
 
+    # make required directories
     make_dirs() {
-       # make required directories
-       user=`$nginx -V 2>&1 | grep "configure arguments:" | sed 's/[^*]*--user=\([^ ]*\).*/\1/g' -`
-       if [ -z "`grep $user /etc/passwd`" ]; then
-           useradd -M -s /bin/nologin $user
-       fi
-       options=`$nginx -V 2>&1 | grep 'configure arguments:'`
-       for opt in $options; do
-           if [ `echo $opt | grep '.*-temp-path'` ]; then
-               value=`echo $opt | cut -d "=" -f 2`
-               if [ ! -d "$value" ]; then
-                   # echo "creating" $value
-                   mkdir -p $value && chown -R $user $value
-               fi
-           fi
-       done
+        NGINX_USER=`$NGINX -V 2>&1 | grep "configure arguments:" | sed 's/[^*]*--user=\([^ ]*\).*/\1/g' -`
+        if [ -z "`grep $NGINX_USER /etc/passwd`" ]; then
+            if [ -z "`grep $NGINX_USER /etc/group`" ]; then
+                /usr/sbin/groupadd $NGINX_USER
+            fi
+            /usr/sbin/useradd -M -g $NGINX_USER -s /bin/false $NGINX_USER
+        fi
+        OPTIONS=`$NGINX -V 2>&1 | grep 'configure arguments:'`
+        for OPT in $OPTIONS; do
+            if [ `echo $OPT | grep '.*-temp-path'` ]; then
+                VALUE=`echo $OPT | cut -d "=" -f 2`
+                if [ ! -d "$VALUE" ]; then
+                    # echo "creating" $value
+                    mkdir -p $VALUE && chown -R $NGINX_USER $VALUE
+                fi
+            fi
+        done
     }
 
     start() {
-        [ -x $nginx ] || exit 5
-        [ -f $NGINX_CONF_FILE ] || exit 6
+        if [ ! -x $NGINX ]; then
+            exit 1
+        fi
+        if [ ! -f $NGINX_CONF_FILE ]; then
+            exit 6
+        fi
+
         make_dirs
         echo -n $"Starting $prog: "
-        daemon $nginx -c $NGINX_CONF_FILE
-        retval=$?
+        daemon $NGINX -c $NGINX_CONF_FILE
+        RETVAL=$?
         echo
-        [ $retval -eq 0 ] && touch $lockfile
-        return $retval
+        [ $RETVAL -eq 0 ] && touch $lockfile
+        return $RETVAL
     }
 
     stop() {
         echo -n $"Stopping $prog: "
+        # QUIT:graceful shutdown
         killproc $prog -QUIT
-        retval=$?
+        RETVAL=$?
         echo
-        [ $retval -eq 0 ] && rm -f $lockfile
-        return $retval
+        [ $RETVAL -eq 0 ] && rm -f $lockfile
+        return $RETVAL
     }
 
     restart() {
@@ -630,17 +636,16 @@
     reload() {
         configtest || return $?
         echo -n $"Reloading $prog: "
+        # changing configuration, keeping up with a changed time zone (only for FreeBSD and Linux), 
+        # starting new worker processes with a new configuration, graceful shutdown of old worker processes
         killproc $nginx -HUP
         RETVAL=$?
         echo
-    }
-
-    force_reload() {
-        restart
+        return $RETVAL
     }
 
     configtest() {
-      $nginx -t -c $NGINX_CONF_FILE
+        $nginx -t -c $NGINX_CONF_FILE
     }
 
     rh_status() {
@@ -667,17 +672,14 @@
             rh_status_q || exit 7
             $1
             ;;
-        force-reload)
-            force_reload
-            ;;
         status)
             rh_status
             ;;
         condrestart|try-restart)
             rh_status_q || exit 0
-                ;;
+            ;;
         *)
-            echo $"Usage: $0 {start|stop|status|restart|condrestart|try-restart|reload|force-reload|configtest}"
+            echo $"Usage: $0 {start|stop|status|restart|condrestart|try-restart|reload|configtest}"
             exit 2
     esac
 
