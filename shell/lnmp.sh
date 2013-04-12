@@ -667,14 +667,14 @@ reload() {
     echo -n $"Reloading $prog: "
     # changing configuration, keeping up with a changed time zone (only for FreeBSD and Linux), 
     # starting new worker processes with a new configuration, graceful shutdown of old worker processes
-    killproc $nginx -HUP
+    killproc $NGINX -HUP
     RETVAL=$?
     echo
     return $RETVAL
 }
 
 configtest() {
-    $nginx -t -c $NGINX_CONF_FILE
+    $NGINX -t -c $NGINX_CONF_FILE
 }
 
 rh_status() {
