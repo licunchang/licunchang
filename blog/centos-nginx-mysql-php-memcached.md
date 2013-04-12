@@ -71,7 +71,7 @@
 添加一个MySQL使用的用户和用户组：
 
     /usr/sbin/groupadd mysql
-    /usr/sbin/useradd -g mysql mysql -s /bin/false
+    /usr/sbin/useradd -M -g mysql mysql -s /bin/false
     
 将MySQL的数据文件放置在/data/mysql目录下，配置文件my.cnf放置在/etc/mysql目录下：
 

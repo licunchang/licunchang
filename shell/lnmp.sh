@@ -104,7 +104,7 @@ mysql() {
     # Create a mysql User and Group
     echo "create a mysql user and group."
     /usr/sbin/groupadd mysql
-    /usr/sbin/useradd -g mysql mysql -s /bin/false
+    /usr/sbin/useradd -M -g mysql mysql -s /bin/false
 
     # Create the mysql data directory: /data/mysql
     echo "create the mysql data directory."
@@ -275,7 +275,7 @@ php() {
     make install
     
     /usr/sbin/groupadd www
-    /usr/sbin/useradd -g www www -s /bin/false
+    /usr/sbin/useradd -M -g www www -s /bin/false
 
     cd /usr/local/src/php-5.4.12
     ./configure --prefix=/usr/local/php --with-config-file-path=/usr/local/php/etc --enable-bcmath --enable-shmop --enable-sysvsem --enable-ftp --with-curl --with-curlwrappers --with-png-dir --with-jpeg-dir --with-freetype-dir --with-gd --enable-gd-native-ttf --enable-mbstring --enable-soap --enable-sockets --enable-zip --with-xmlrpc --with-mysql=/usr/local/mysql --with-mysqli=/usr/local/mysql/bin/mysql_config --with-pdo-mysql=/usr/local/mysql/ --enable-fpm --with-fpm-user=www --with-fpm-group=www --with-zlib --with-iconv-dir=/usr/local/libiconv/ --with-pcre-dir=/usr/local/pcre --with-libxml-dir --with-mcrypt=/usr/local/libmcrypt/ --with-mhash=/usr/local/mhash/

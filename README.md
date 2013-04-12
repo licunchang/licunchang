@@ -36,3 +36,16 @@ CentOS 6.4 下安装 httpd-2.2.24 MySQL-5.5.30 PHP-5.4.12 脚本。
 ### nginx.init.d
 
 Nginx 的启停脚本 /etc/init.d/nginx 
+
+
+
+
+
+
+
+
+
+
+
+
+
