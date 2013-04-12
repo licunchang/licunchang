@@ -644,6 +644,17 @@
         return $RETVAL
     }
 
+    reopen-logs() {
+        configtest || return $?
+        echo -n $"Re-opening log files: "
+        # changing configuration, keeping up with a changed time zone (only for FreeBSD and Linux), 
+        # starting new worker processes with a new configuration, graceful shutdown of old worker processes
+        killproc $NGINX -USR1
+        RETVAL=$?
+        echo
+        return $RETVAL
+    }
+
     configtest() {
         $NGINX -t -c $NGINX_CONF_FILE
     }
@@ -672,6 +683,10 @@
             rh_status_q || exit 7
             $1
             ;;
+        reopen-logs)
+            rh_status_q || exit 7
+            $1
+            ;;
         status)
             rh_status
             ;;
@@ -679,9 +694,10 @@
             rh_status_q || exit 0
             ;;
         *)
-            echo $"Usage: $0 {start|stop|status|restart|condrestart|try-restart|reload|configtest}"
+            echo $"Usage: $0 {start|stop|status|restart|condrestart|try-restart|reload|reopen-logs|configtest}"
             exit 2
     esac
+    exit $?
 
 启动脚本权限
 
@@ -728,44 +744,86 @@
 
 部署 nginx 日志切割任务 `crontab -u root -e`
 
-    00 00 * * * /bin/bash /data/crontab/cut_nginx_logs.sh
+    00 00 * * * /bin/bash /data/cron/nginx_logs_cut.sh
 
-创建脚本 `vi /data/cron/cut_nginx_logs.sh`
+创建脚本 `vi /data/cron/nginx_logs_cut.sh`
 
     #!/bin/bash
-    #description    cut nginx log files, run at 00:00
-    #crontab        00 00 * * * /bin/bash /data/cron/cut_nginx_logs.sh
-    #author         licunchang
+    #description    cut nginx log files, run at 00:00 everyday
+    #crontab        00 00 * * * /bin/bash /data/cron/nginx_logs_cut.sh
+    #author         LiCunchang(printf@live.com)
 
-    log_files_path="/usr/local/nginx/logs/"
-    log_files_name=(www.licunchang.com mysql.licunchang.com)
-    log_files_path_backup="/data/logs/nginx/"
+    ### PART 1: Move web logs to the backup directory which named by year & month.
 
-    save_days=100
+    LOGS_PATH=/usr/local/nginx/logs/
+    LOGS_NAME=(www.licunchang.com mysql.licunchang.com)
+    LOGS_BACKUP=/data/logs/nginx/$(date -d "yesterday" +"%Y%m")/
 
-    if [ ! -d $log_files_path_backup ]; then;
-        mkdir -p $log_files_path_backup
+    if [ ! -d $LOGS_BACKUP ]; then
+        mkdir -p $LOGS_BACKUP
     fi
 
-    log_files_num=${#log_files_name[@]}
+    LOGS_NUM=${#LOGS_NAME[@]}
 
-    #backup the webapp access log
-    for((i=0;i<$log_files_num;i++)); do
-        if [ -f ${log_files_path}${log_files_name[i]}.access.log ]; then;
-            mv ${log_files_path}${log_files_name[i]}.access.log ${log_files_path_backup}${log_files_name[i]}.access_$(date -d "yesterday" +"%Y%m%d").log
+    for ((i=0; i<$LOGS_NUM; i++)); do
+        if [ -f ${LOGS_PATH}${LOGS_NAME[i]}.access.log ]; then
+            mv ${LOGS_PATH}${LOGS_NAME[i]}.access.log ${LOGS_BACKUP}${LOGS_NAME[i]}.access_$(date -d "yesterday" +"%Y%m%d%k%M%S").log
+        fi
+        if [ -f ${LOGS_PATH}${LOGS_NAME[i]}.error.log ]; then
+            mv ${LOGS_PATH}${LOGS_NAME[i]}.error.log ${LOGS_BACKUP}${LOGS_NAME[i]}.error_$(date -d "yesterday" +"%Y%m%d%k%M%S").log
         fi
     done
 
-    #backup the error log
-    mv ${log_files_path}error.log ${log_files_path_backup}error_$(date -d "yesterday" +"%Y%m%d").log
+    if [ -f ${LOGS_PATH}error.log ]; then
+        mv ${LOGS_PATH}error.log ${LOGS_BACKUP}error_$(date -d "yesterday" +"%Y%m%d%k%M%S").log
+    fi
 
-    #delete the log over 100 days
-    find $log_files_path -mtime +$save_days -exec rm -rf {} \; 
+    if [ -f ${LOGS_PATH}access.log ]; then
+        mv ${LOGS_PATH}access.log ${LOGS_BACKUP}access_$(date -d "yesterday" +"%Y%m%d%k%M%S").log
+    fi
 
-    chmod 444 /data/logs/nginx/  -R
+    chmod 444 $LOGS_BACKUP  -R
 
-    #reload the nginx server
-    /etc/rc.d/init.d/nginx reload
+    ### PART 2: make the nginx server reopen a new log files if the nginx is running.
+
+    # Source function library.
+    . /etc/rc.d/init.d/functions
+
+    NGINX="/usr/local/nginx/sbin/nginx"
+    NGINX_CONF_FILE="/usr/local/nginx/conf/nginx.conf"
+
+    prog=$(basename $NGINX)
+    lockfile=/var/lock/subsys/nginx
+
+    reopen-logs() {
+        $NGINX -t -c $NGINX_CONF_FILE || return $?
+        echo -n $"Re-opening log files: "
+        # changing configuration, keeping up with a changed time zone (only for FreeBSD and Linux), 
+        # starting new worker processes with a new configuration, graceful shutdown of old worker processes
+        killproc $NGINX -USR1
+        RETVAL=$?
+        echo
+        return $RETVAL
+    }
+
+    rh_status() {
+        status $prog
+    }
+
+    rh_status_q() {
+        rh_status >/dev/null 2>&1
+    }
+
+    # Check that networking is up.
+    rh_status_q && reopen-logs
+
+    ### PART 3: remove the old logs to free some disk space.
+
+    cd $LOGS_BACKUP
+    cd ..
+
+    SAVE_MONTHS=12
+    find . -mtime +$(($SAVE_MONTHS*30)) -exec rm -rf {} \;
 
 ## 5 Memcached
 

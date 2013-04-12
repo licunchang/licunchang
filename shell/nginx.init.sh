@@ -91,6 +91,17 @@ reload() {
     return $RETVAL
 }
 
+reopen-logs() {
+    configtest || return $?
+    echo -n $"Re-opening log files: "
+    # changing configuration, keeping up with a changed time zone (only for FreeBSD and Linux), 
+    # starting new worker processes with a new configuration, graceful shutdown of old worker processes
+    killproc $NGINX -USR1
+    RETVAL=$?
+    echo
+    return $RETVAL
+}
+
 configtest() {
     $NGINX -t -c $NGINX_CONF_FILE
 }
@@ -119,6 +130,10 @@ case "$1" in
         rh_status_q || exit 7
         $1
         ;;
+    reopen-logs)
+        rh_status_q || exit 7
+        $1
+        ;;
     status)
         rh_status
         ;;
@@ -126,6 +141,7 @@ case "$1" in
         rh_status_q || exit 0
         ;;
     *)
-        echo $"Usage: $0 {start|stop|status|restart|condrestart|try-restart|reload|configtest}"
+        echo $"Usage: $0 {start|stop|status|restart|condrestart|try-restart|reload|reopen-logs|configtest}"
         exit 2
 esac
+exit $?

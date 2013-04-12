@@ -1,6 +1,6 @@
 #!/bin/bash
 # description    Install nginx1.2.7 & mysql5.5.30 & php5.4.12 on CentOS6.4
-# author         LiCunchang
+# author         LiCunchang(printf@live.com)
 
 # 1 nginx-1.2.7.tar.gz
 # 2 openssl-1.0.1e.tar.gz
@@ -673,6 +673,17 @@ reload() {
     return $RETVAL
 }
 
+reopen-logs() {
+    configtest || return $?
+    echo -n $"Re-opening log files: "
+    # changing configuration, keeping up with a changed time zone (only for FreeBSD and Linux), 
+    # starting new worker processes with a new configuration, graceful shutdown of old worker processes
+    killproc $NGINX -USR1
+    RETVAL=$?
+    echo
+    return $RETVAL
+}
+
 configtest() {
     $NGINX -t -c $NGINX_CONF_FILE
 }
@@ -701,6 +712,10 @@ case "$1" in
         rh_status_q || exit 7
         $1
         ;;
+    reopen-logs)
+        rh_status_q || exit 7
+        $1
+        ;;
     status)
         rh_status
         ;;
@@ -708,9 +723,10 @@ case "$1" in
         rh_status_q || exit 0
         ;;
     *)
-        echo $"Usage: $0 {start|stop|status|restart|condrestart|try-restart|reload|configtest}"
+        echo $"Usage: $0 {start|stop|status|restart|condrestart|try-restart|reload|reopen-logs|configtest}"
         exit 2
 esac
+exit $?
 EOF
 
     chmod 755 /data/scripts/nginx
@@ -753,6 +769,89 @@ EOF
         # deny all;
     # }
     
+    mkdir -p /data/logs/nginx/
+    mkdir -p /data/cron/
+    cat > /data/cron/nginx_logs_cut.sh <<'EOF'
+#!/bin/bash
+#description    cut nginx log files, run at 00:00 everyday
+#crontab        00 00 * * * /bin/bash /data/cron/nginx_logs_cut.sh
+#author         LiCunchang(printf@live.com)
+
+### PART 1: Move web logs to the backup directory which named by year & month.
+
+LOGS_PATH=/usr/local/nginx/logs/
+LOGS_NAME=(www.licunchang.com mysql.licunchang.com)
+LOGS_BACKUP=/data/logs/nginx/$(date -d "yesterday" +"%Y%m")/
+
+if [ ! -d $LOGS_BACKUP ]; then
+    mkdir -p $LOGS_BACKUP
+fi
+
+LOGS_NUM=${#LOGS_NAME[@]}
+
+for ((i=0; i<$LOGS_NUM; i++)); do
+    if [ -f ${LOGS_PATH}${LOGS_NAME[i]}.access.log ]; then
+        mv ${LOGS_PATH}${LOGS_NAME[i]}.access.log ${LOGS_BACKUP}${LOGS_NAME[i]}.access_$(date -d "yesterday" +"%Y%m%d%k%M%S").log
+    fi
+    if [ -f ${LOGS_PATH}${LOGS_NAME[i]}.error.log ]; then
+        mv ${LOGS_PATH}${LOGS_NAME[i]}.error.log ${LOGS_BACKUP}${LOGS_NAME[i]}.error_$(date -d "yesterday" +"%Y%m%d%k%M%S").log
+    fi
+done
+
+if [ -f ${LOGS_PATH}error.log ]; then
+    mv ${LOGS_PATH}error.log ${LOGS_BACKUP}error_$(date -d "yesterday" +"%Y%m%d%k%M%S").log
+fi
+
+if [ -f ${LOGS_PATH}access.log ]; then
+    mv ${LOGS_PATH}access.log ${LOGS_BACKUP}access_$(date -d "yesterday" +"%Y%m%d%k%M%S").log
+fi
+
+chmod 444 $LOGS_BACKUP  -R
+
+### PART 2: make the nginx server reopen a new log files if the nginx is running.
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+NGINX="/usr/local/nginx/sbin/nginx"
+NGINX_CONF_FILE="/usr/local/nginx/conf/nginx.conf"
+
+prog=$(basename $NGINX)
+lockfile=/var/lock/subsys/nginx
+
+reopen-logs() {
+    $NGINX -t -c $NGINX_CONF_FILE || return $?
+    echo -n $"Re-opening log files: "
+    # changing configuration, keeping up with a changed time zone (only for FreeBSD and Linux), 
+    # starting new worker processes with a new configuration, graceful shutdown of old worker processes
+    killproc $NGINX -USR1
+    RETVAL=$?
+    echo
+    return $RETVAL
+}
+
+rh_status() {
+    status $prog
+}
+
+rh_status_q() {
+    rh_status >/dev/null 2>&1
+}
+
+# Check that networking is up.
+rh_status_q && reopen-logs
+
+### PART 3: remove the old logs to free some disk space.
+
+cd $LOGS_BACKUP
+cd ..
+
+SAVE_MONTHS=12
+find . -mtime +$(($SAVE_MONTHS*30)) -exec rm -rf {} \;
+EOF
+    
+    echo "00 00 * * * /bin/bash /data/cron/nginx_logs_cut.sh" >> /var/spool/cron/root
+
     return #?
 }
 
