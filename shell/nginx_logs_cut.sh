@@ -72,5 +72,5 @@ rh_status_q && reopen-logs
 cd $LOGS_BACKUP
 cd ..
 
-SAVE_MONTHS=12
-find . -mtime +$(($SAVE_MONTHS*30)) -exec rm -rf {} \;
+LOGS_LIFETIME_MONTHS=12
+find . -mtime +$(($LOGS_LIFETIME_MONTHS*30)) -exec rm -rf {} \;

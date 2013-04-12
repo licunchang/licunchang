@@ -676,8 +676,7 @@ reload() {
 reopen-logs() {
     configtest || return $?
     echo -n $"Re-opening log files: "
-    # changing configuration, keeping up with a changed time zone (only for FreeBSD and Linux), 
-    # starting new worker processes with a new configuration, graceful shutdown of old worker processes
+    # re-opening log files
     killproc $NGINX -USR1
     RETVAL=$?
     echo
@@ -846,8 +845,8 @@ rh_status_q && reopen-logs
 cd $LOGS_BACKUP
 cd ..
 
-SAVE_MONTHS=12
-find . -mtime +$(($SAVE_MONTHS*30)) -exec rm -rf {} \;
+LOGS_LIFETIME_MONTHS=12
+find . -mtime +$(($LOGS_LIFETIME_MONTHS*30)) -exec rm -rf {} \;
 EOF
     
     echo "00 00 * * * /bin/bash /data/cron/nginx_logs_cut.sh" >> /var/spool/cron/root

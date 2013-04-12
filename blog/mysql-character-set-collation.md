@@ -17,7 +17,7 @@ character set 是一套符号及其编码的集合。举个例子，我们有四
 
 >A **collation** is a set of rules for comparing characters in a character set. [[1]][1]
 
-Collation 就是在相应的 character set 下比较 character 的规则。在上面的 character set 中，加入我们要比较字母“A”和“B”，最简单的方式就是去比较两个字符的编码：“A”对应 0 ，“B”对应 1 ，因为 0 小于 1 ，所以我们就说“A”小于“B”，这样，我们就为上面的拥有四个字母的 character set 建立了一套比较的规则，这套规则就叫做 collation 。这种简单比较字符编码的 collation 通常我们称为 **binary collation** 。
+Collation 就是在相应的 character set 下比较 character 的规则。在上面的 character set 中，我们要比较字母 “A” 和 “B” ，最简单的方式就是去比较两个字符的编码：“A” 对应 0 ，“B” 对应 1 ，因为 0 小于 1 ，所以我们就说 “A” 小于 “B” ，这样，我们就为上面的拥有四个字母的 character set 建立了一套比较的规则，这套规则就叫做 collation 。这种简单比较字符编码的 collation 通常我们称为 **binary collation** 。
 
 但是有时候我们比较字母的时候会忽略大小写的因素，那么基于这种考虑的比较规则就有两个步骤：1) 将比较的两个字母同时转换成相同的大写或者小写形式；2) 比较它们各自的编码。这样的比较规则就比上面单纯比较字母编码的规则要复杂一些。这是一种 **case-insensitive collation(大小写不敏感 collation)**
 
@@ -28,11 +28,11 @@ Collation 就是在相应的 character set 下比较 character 的规则。在�
 MySQL 包含了对多种 character set 和相应 collation 的支持，其中：
 
 * 可以使用多种多样的 character set 来存储数据
-* 每一种 character set 至少有一种 collation 规则
+* 每一种 character set 至少有一种 collation
 * 可以在同一个服务器、同一个数据库甚至同一个表中使用不同的 character set 来存储数据
-* 可以在`server`、`database`、`table`或`column`级别对 character set 进行指定
+* 可以在`server`、`database`、`table`或`column`级别对 character set 进行设定
 
-你可以通过在客户端下执行`SHOW CHARACTER SET`来查看 MySQL 所支持的 character set，下面的代码截取自一部分显示结果：
+我们可以通过在客户端下执行`SHOW CHARACTER SET`来查看 MySQL 所支持的 character set，下面的代码截取自一部分显示结果：
 
     mysql> SHOW CHARACTER SET;
     +----------+-----------------------------+---------------------+--------+
@@ -46,7 +46,7 @@ MySQL 包含了对多种 character set 和相应 collation 的支持，其中：
     +----------+-----------------------------+---------------------+--------+
     39 rows in set (0.00 sec)
 
-在 MySQL 中任何给定的 character set 都至少提供一种 collation ，有的 character set 甚至包含多种 collation 。你可以使用`SHOW COLLATION`命令列出当前系统所提供的 collation 。
+在 MySQL 中任何给定的 character set 都至少提供一种 collation ，有的 character set 甚至包含多种 collation 。使用 `SHOW COLLATION` 命令列出当前系统所提供的 collation 。
 
     mysql> SHOW COLLATION;
     +--------------------------+----------+-----+---------+----------+---------+
@@ -74,21 +74,21 @@ MySQL 包含了对多种 character set 和相应 collation 的支持，其中：
     +--------------------------+---------+-----+---------+----------+---------+
     45 rows in set (0.01 sec)
 
-Collation 有以下规则：
+MySQL 的 Collation 有以下特点：
 
 * 每一种 collation 只对应一种 character set，也就是说不同的 character set 不可能拥有相同的 collation
 * 每一种 character set 都有一个默认的 collation。在`SHOW COLLATION`命令的结果中，第四列的“Default”就是相应的 character set所对应的 collation，
-* collation 的命名有一些规律：通常以相关联的 character set 的名字为前缀，然后中间一般是语言的名称，最后以 **\_ci** (case insensitive 大小写不敏感)， **\_cs** (case sensitive 大小写敏感)， 或者 **\_bin** (binary)结尾
+* collation 的命名有一些规律：通常以相关联的 character set 的名字为前缀，然后中间一般是语种的名称，最后以 **\_ci** (case insensitive 大小写不敏感)， **\_cs** (case sensitive 大小写敏感)， 或者 **\_bin** (binary)结尾
 
-[Collation-Charts.ORG](http://collation-charts.org)提供了各种collation的更详细的说明。
+[Collation-Charts.ORG](http://collation-charts.org)提供了各种 collation 的更详细的说明。
 
 ## 2 MySQL中 character set 和 collation 的 level
 
-MySQL中可以在 server，database，table，column 四个级别对 character set 和 collation 进行默认设定。甚至我们还可以单独对字符串设定其 character set 和 collation 。
+MySQL中可以在 server，database，table，column 四个级别对 character set 和 collation 进行设定。甚至我们还可以单独对字符串(string literal)设定其 character set 和 collation 。
 
 ### 2.1 Server Character Set & Collation
 
-你可以通过`SHOW VARIABLES LIKE 'character_set_server'` 和 `SHOW VARIABLES LIKE 'collation_server'` 命令来查看当前系统 server 级别的 character set 和 collation 设定：
+使用 `SHOW VARIABLES LIKE 'character_set_server'` 和 `SHOW VARIABLES LIKE 'collation_server'` 命令来查看当前系统 server 级别的 character set 和 collation 设定：
 
     mysql> SHOW VARIABLES LIKE 'character_set_server';
     +----------------------+-------+
@@ -122,16 +122,16 @@ MySQL中可以在 server，database，table，column 四个级别对 character s
 server 的 character set 和 collation 的设定规则如下：
 
 1. 如果在启动参数或者配置文件中同时指定了正确的 `--character-set-server` 和 `--collation-server` 那么系统将使用指定的 character set 和 collation
-2. 只是指定了 `--character-set-server` 那么 server 级别的 collation 将使用指定的 character set 默认的 collation
-3. 如果没有指定 `--character-set-server` 那么 server 级别的 character set 和 collation 将使用默认的 character set(latin1)和 collation(latin1\_swedish\_ci)
+2. 只是指定了 `--character-set-server` 那么 将使用指定的 character set 默认的 collation
+3. 如果没有指定 `--character-set-server` 那么 character set 和 collation 将使用默认的 character set(latin1)和 collation(latin1\_swedish\_ci)
 
-如果你想修改系统默认的 character set(latin1)和 collation(latin1_swedish_ci)，那么你必须在编译的时候指定
+_注意_：如果你想修改系统默认的 character set(latin1)和 collation(latin1_swedish_ci)，那么你必须在编译的时候指定
 
     shell> cmake . -DDEFAULT_CHARSET=utf8 -DDEFAULT_COLLATION=utf8_general_ci
 
 cmake 编译的时候和 mysqld 启动的时候都会对指定的 character set 和 collation 进行合法性检查，如果不符合要求，那么程序将报错返回停止执行。
 
-server 级别的 character set 和 collation 作用只是当使用`CREATE DATABASE`语句创建数据库时没有指定 character set 和 collation 时提供一个默认值，除此之外，server 级别的 character set 和 collation 没有其他作用。
+server 级别的 character set 和 collation 作用只是当使用 `CREATE DATABASE` 语句创建数据库没有指定 character set 和 collation 时提供一个默认值，除此之外，没有其他作用。
 
 ### 2.2 Database Character Set and Collation
 
@@ -145,18 +145,18 @@ server 级别的 character set 和 collation 作用只是当使用`CREATE DATABA
         [[DEFAULT] CHARACTER SET charset_name]
         [[DEFAULT] COLLATE collation_name]
 
-这样单独设置每个 database 的 character set 和 collation ，每个 database 目录下的**db.opt**文件中可以查看该 database 的 character set 和 collation 。这样就使得在同一个 server 下能存在不同 character set 和 collation 的 database。
+这样可以单独设定每个 database 的 character set 和 collation ，在每个 database 目录下的 **db.opt** 文件中可以查看该 database 的 character set 和 collation 。这样就使得在同一个 server 下能存在不同 character set 和 collation 的 database。
 
 database 的 character set 和 collation 的设定规则如下：
 
-1. 如果 `CREATE DATABASE` 或 `ALTER DATABASE` 同时指定了 `CHARACTER SET X` 和 `COLLATE Y`，那么 character set 就是 **X** collation 就是 **Y**
-2. 如果只是指定了 `CHARACTER SET X`，那么 character set 就是 **X**，同时使用 **X** 的默认 collation
-3. 如果只是指定了 `COLLATE Y`，collation 为 **Y**， 同时使用 **Y** 对应的 character set
+1. 如果 `CREATE DATABASE` 或 `ALTER DATABASE` 同时设定了 `CHARACTER SET X` 和 `COLLATE Y`，那么 character set 就是 **X**， collation 就是 **Y**
+2. 如果只是设定了 `CHARACTER SET X`，那么 character set 使用 **X**，同时使用 **X** 的对应默认 collation
+3. 如果只是设定了 `COLLATE Y`，collation 为 **Y**， 同时使用 **Y** 对应的 character set
 4. 除以上情况，使用 server 的 character set 和 collation
 
 Database 级别的 character set 和 collation 作用是当使用 `CREATE TABLE` 没有指定 character set 时，作为 table 的默认值，除此之外， `LOAD DATA INFILE` 也使用 database 级别的 character set 和 collation。
 
-你可以通过`SHOW VARIABLES LIKE 'character_set_database'` 和 `SHOW VARIABLES LIKE 'collation_database'` 命令来查看当前系统 database 级别的 character set 和 collation 设定：
+你可以通过 `SHOW VARIABLES LIKE 'character_set_database'` 和 `SHOW VARIABLES LIKE 'collation_database'` 命令来查看当前系统默认 database 级别的 character set 和 collation 设定，如果没有默认 database，那么这两个变量和 server 级别的 `character_set_server`、`collation_server`保持一致：
 
     mysql> SHOW VARIABLES LIKE 'character_set_database';
     +------------------------+-------+
@@ -173,12 +173,9 @@ Database 级别的 character set 和 collation 作用是当使用 `CREATE TABLE`
     +--------------------+-----------------+
     1 row in set
 
-？？？？？？
-The character set and collation for the default database can be determined from the values of the character_set_database and collation_database system variables. The server sets these variables whenever the default database changes. If there is no default database, the variables have the same value as the corresponding server-level system variables, character_set_server and collation_server. 
-
 ### 2.3 Table Character Set & Collation
 
-每张表都可以设定自己的 character set 和 collation ，你可以使用 `CREATE TABLE ` 或者 `ALTER TABLE` 语句来设定：
+每张表也可以设定自己的 character set 和 collation ，你可以使用 `CREATE TABLE ` 或者 `ALTER TABLE` 语句来设定：
 
     CREATE TABLE tbl_name (column_list)
         [[DEFAULT] CHARACTER SET charset_name]
@@ -195,7 +192,7 @@ Table 的 character set 和 collation 的设定规则如下：
 3. 如果只指定了 `COLLATE Y` 而没有指定 `CHARACTER SET` ，那么使用 **Y** 和 **Y** 对应关联的 character set
 4. 除以上情况以外，使用 database 级别的 character set 和 collation 
 
-table 级别的 character set 和 collation 作用是当 column 的character set 和 collation 没有指定的时候提供默认值。table 级别的 character set 和 collation 是 MySQL 对标准 SQL 的扩展。
+table 级别的 character set 和 collation 作用是当 column 的character set 和 collation 没有设定的时候提供默认值。table 级别的 character set 和 collation 是 MySQL 对标准 SQL 的扩展。
 
 ### 2.4 Column Character Set and Collation
 
@@ -253,7 +250,7 @@ Column 的 character set 和 collation 的设定规则如下：
 
 ### 2.5 Character String Literal Character Set and Collation
 
-除以上以外，我们还可以对字符串类型设置 character set 和 collation。
+除以上以外，我们还可以对字符串（String Literal）设置 character set 和 collation。
 
 **binary string**是一种没有 character set 和 collation 的由字节组成的字符，**nonbinary string** 是一种定义了 character set 和 collation 的字符。
 
