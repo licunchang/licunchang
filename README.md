@@ -27,7 +27,7 @@ CentOS 6.4 下安装 httpd-2.2.24 MySQL-5.5.30 PHP-5.4.12 脚本。
 
 ### lnmp.sh
 
-CentOS 6.4 下安装 Nginx-1.2.7 MySQL-5.5.30 PHP-5.4.12 脚本，是 **CentOS-Nginx-MySQL-PHP-Memcached.md** 的实现。
+CentOS 6.4 下安装 Nginx-1.2.7 MySQL-5.5.30 PHP-5.4.12 脚本，是 **centos-nginx-mysql-php-memcached.md** 的实现。
 
 ### lnmpex.sh
 
