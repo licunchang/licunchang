@@ -805,19 +805,19 @@ LOGS_NUM=${#LOGS_NAME[@]}
 
 for ((i=0; i<$LOGS_NUM; i++)); do
     if [ -f ${LOGS_PATH}${LOGS_NAME[i]}.access.log ]; then
-        mv ${LOGS_PATH}${LOGS_NAME[i]}.access.log ${LOGS_BACKUP}${LOGS_NAME[i]}.access_$(date -d "yesterday" +"%Y%m%d%k%M%S").log
+        mv ${LOGS_PATH}${LOGS_NAME[i]}.access.log ${LOGS_BACKUP}${LOGS_NAME[i]}.access_$(date -d "yesterday" +"%Y%m%d%H%M%S").log
     fi
     if [ -f ${LOGS_PATH}${LOGS_NAME[i]}.error.log ]; then
-        mv ${LOGS_PATH}${LOGS_NAME[i]}.error.log ${LOGS_BACKUP}${LOGS_NAME[i]}.error_$(date -d "yesterday" +"%Y%m%d%k%M%S").log
+        mv ${LOGS_PATH}${LOGS_NAME[i]}.error.log ${LOGS_BACKUP}${LOGS_NAME[i]}.error_$(date -d "yesterday" +"%Y%m%d%H%M%S").log
     fi
 done
 
 if [ -f ${LOGS_PATH}error.log ]; then
-    mv ${LOGS_PATH}error.log ${LOGS_BACKUP}error_$(date -d "yesterday" +"%Y%m%d%k%M%S").log
+    mv ${LOGS_PATH}error.log ${LOGS_BACKUP}error_$(date -d "yesterday" +"%Y%m%d%H%M%S").log
 fi
 
 if [ -f ${LOGS_PATH}access.log ]; then
-    mv ${LOGS_PATH}access.log ${LOGS_BACKUP}access_$(date -d "yesterday" +"%Y%m%d%k%M%S").log
+    mv ${LOGS_PATH}access.log ${LOGS_BACKUP}access_$(date -d "yesterday" +"%Y%m%d%H%M%S").log
 fi
 
 chmod 444 $LOGS_BACKUP  -R
