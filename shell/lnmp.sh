@@ -40,28 +40,28 @@ fi
 
 # Create yum repository from cdrom media
 echo "create yum repository from cdrom media."
-cdrom_mount_dir="/mnt/cdrom"
-if [ ! -d "$cdrom_mount_dir" ]; then
-    mkdir $cdrom_mount_dir
-    exit_value=$?
-    if [ $exit_value -gt 0 ]; then
+CDROM_MOUNT_DIR="/mnt/cdrom"
+if [ ! -d "$CDROM_MOUNT_DIR" ]; then
+    mkdir $CDROM_MOUNT_DIR
+    EXIT_VALUE=$?
+    if [ $EXIT_VALUE -gt 0 ]; then
         echo "can't create a directory as a mount point"
     fi
 fi
 
-if [ -z "`ls -A "$cdrom_mount_dir"`" ]; then
+if [ -z "`ls -A "$CDROM_MOUNT_DIR"`" ]; then
     echo "mount cdrom"
-    mount /dev/cdrom $cdrom_mount_dir
+    mount /dev/cdrom $CDROM_MOUNT_DIR
 fi
 
 cd /etc/yum.repos.d
 
 ls | grep -i '.repo$' > repo.list
 if [ `cat repo.list | wc -l` -ne 0 ]; then
-    for repo in `cat repo.list`
+    for REPO in `cat repo.list`
     do
-        echo "backup the repo files:$repo"
-        mv $repo ${repo}_licunchang.bak
+        echo "backup the repo files:$REPO"
+        mv $REPO ${REPO}_licunchang.bak
     done
 fi
 
@@ -86,10 +86,10 @@ cd /usr/local/src
 # unzip the packages
 ls | grep -i '.tar.gz$' > tar.list
 if [ `cat tar.list | wc -l` -ne 0 ]; then
-    for tar in `cat tar.list`
+    for TAR in `cat tar.list`
     do
-        echo "unzip the package: $tar"
-        tar zxf $tar
+        echo "unzip the package: $TAR"
+        tar zxf $TAR
     done
 fi
 
@@ -125,24 +125,24 @@ mysql() {
     rm -f /etc/my.cnf
     
     # Free Memory
-    memory_free=`free -m | grep Mem | awk '{print $4}'`
+    MEMORY_FREE=`free -m | grep Mem | awk '{print $4}'`
     
-    if [ $memory_free -le 128 ]; then
+    if [ $MEMORY_FREE -le 128 ]; then
         echo "copy my-medium.cnf as the configuration file"
         cp -f /usr/local/src/mysql-5.5.30/support-files/my-medium.cnf /etc/mysql/my.cnf
     fi
     
-    if [ $memory_free -le 512 -a $memory_free -gt 128 ]; then
+    if [ $MEMORY_FREE -le 512 -a $MEMORY_FREE -gt 128 ]; then
         echo "copy my-large.cnf as the configuration file"
         cp -f /usr/local/src/mysql-5.5.30/support-files/my-large.cnf /etc/mysql/my.cnf
     fi
     
-    if [ $memory_free -le 4096 -a $memory_free -gt 512 ]; then
+    if [ $MEMORY_FREE -le 4096 -a $MEMORY_FREE -gt 512 ]; then
         echo "copy my-huge.cnf as the configuration file"
         cp -f /usr/local/src/mysql-5.5.30/support-files/my-huge.cnf /etc/mysql/my.cnf
     fi
     
-    if [ $memory_free -gt 4096 ]; then
+    if [ $MEMORY_FREE -gt 4096 ]; then
         echo "copy my-innodb-heavy-4G.cnf as the configuration file"
         cp -f /usr/local/src/mysql-5.5.30/support-files/my-innodb-heavy-4G.cnf /etc/mysql/my.cnf
     fi
@@ -384,37 +384,41 @@ nginx() {
     make install
 
     # CPU core number
-    cpu_core_number=`more /proc/cpuinfo | grep "model name" | wc -l`
+    CPU_CORE_NUMBER=`more /proc/cpuinfo | grep "model name" | wc -l`
     
     # Free Memory
-    memory_free=`free -m | grep Mem | awk '{print $4}'`
+    MEMORY_FREE=`free -m | grep Mem | awk '{print $4}'`
     #worker_processes
     
     #vi /usr/local/nginx/conf/nginx.conf
    
     sed -i 's/^#user.*nobody;$/user  www  www;/' /usr/local/nginx/conf/nginx.conf
-    sed -i "s/^worker_processes.*1;\$/worker_processes  $cpu_core_number;/" /usr/local/nginx/conf/nginx.conf
+    sed -i "s/^worker_processes.*1;\$/worker_processes  $CPU_CORE_NUMBER;/" /usr/local/nginx/conf/nginx.conf
     sed -i 's/^#pid/pid/' /usr/local/nginx/conf/nginx.conf
     sed -i 's*^#error_log  logs/error.log  notice;*error_log  logs/error.log  notice;*' /usr/local/nginx/conf/nginx.conf
 
     yum -y install bc
     
-    worker_cpu_affinity='worker_cpu_affinity'
+    WORKER_CPU_AFFINITY='worker_cpu_affinity'
 
-    for ((loop=0;loop<cpu_core_number;loop++))
+    for ((loop=0;loop<CPU_CORE_NUMBER;loop++))
     do
-        cpumask_unformatted=`echo "obase=2;$[ 2 ** $loop ]" | bc`
-        cpumask=`printf " %0${cpu_core_number}d" $cpumask_unformatted`
-        worker_cpu_affinity=${worker_cpu_affinity}${cpumask}
+        CPUMASK_UNFORMATTED=`echo "obase=2;$[ 2 ** $loop ]" | bc`
+        CPUMASK=`printf " %0${CPU_CORE_NUMBER}d" $CPUMASK_UNFORMATTED`
+        worker_cpu_affinity=${WORKER_CPU_AFFINITY}${CPUMASK}
     done
-    worker_cpu_affinity=${worker_cpu_affinity}';'
-    sed -i "/^worker_processes/a\\$worker_cpu_affinity" /usr/local/nginx/conf/nginx.conf
-    sed -i "/^worker_cpu_affinity/a\worker_rlimit_nofile 8192;" /usr/local/nginx/conf/nginx.conf
+    worker_cpu_affinity=${WORKER_CPU_AFFINITY}';'
+    sed -i "/^worker_processes/a\\$WORKER_CPU_AFFINITY" /usr/local/nginx/conf/nginx.conf
+    sed -i "s/^.*worker_connections  1024;$/    worker_connections 8192;/" /usr/local/nginx/conf/nginx.conf
 
-    sed -i "s/^.*worker_connections.*1024;$/    worker_connections 4096;/" /usr/local/nginx/conf/nginx.conf
-    
+    WORKER_RLIMIT_NOFILE=$((8192*$CPU_CORE_NUMBER));
+    sed -i "/^worker_cpu_affinity/a\worker_rlimit_nofile $WORKER_RLIMIT_NOFILE;" /usr/local/nginx/conf/nginx.conf
     sed -i "/^events/a\    use epoll;" /usr/local/nginx/conf/nginx.conf
 
+    ulimit -SHn $WORKER_RLIMIT_NOFILE
+
+    sed -i "s/^;rlimit_files.*1024$/rlimit_files = $WORKER_RLIMIT_NOFILE/" /usr/local/php/etc/php-fpm.conf
+    
     sed -i '/http {/,$d' /usr/local/nginx/conf/nginx.conf
     cat >> /usr/local/nginx/conf/nginx.conf <<'EOF'
 http {
@@ -431,7 +435,7 @@ http {
 
     sendfile        on;
 
-    keepalive_timeout  65;
+    keepalive_timeout  60;
 
     gzip on;
     gzip_min_length  1k;
@@ -477,7 +481,7 @@ EOF
         # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
         # location ~ \.php$ {
         # location ~ .*\.(php|do|inc|tpl)?$ {
-        location ~ .*\.(php|do|inc|tpl)(/.+)$ {
+        location ~ .*\.php(/.+)$ {
             fastcgi_split_path_info ^(.+\.php)(.*)$;
             # NOTE: You should have "cgi.fix_pathinfo = 0;" in php.ini (why:http://www.laruence.com/2009/11/13/1138.html)
 
@@ -528,7 +532,7 @@ EOF
 
         # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
         # location ~ \.php$ {
-        location ~ .*\.(php|do|inc|tpl)(/.+)$ {
+        location ~ .*\.php(/.+)$ {
             fastcgi_split_path_info ^(.+\.php)(.*)$;
             # NOTE: You should have "cgi.fix_pathinfo = 0;" in php.ini (why:http://www.laruence.com/2009/11/13/1138.html)
 
@@ -883,5 +887,3 @@ fi
 if [ -d "/usr/local/src/nginx-1.2.7" ]; then
     nginx
 fi
-
-# http://www.if-not-true-then-false.com/2011/nginx-and-php-fpm-configuration-and-optimizing-tips-and-tricks/
