@@ -298,6 +298,8 @@ php() {
     # group = www
     
     sed -i 's/^;pid/pid/' /usr/local/php/etc/php-fpm.conf
+    # sed -i 's/^listen = 127.0.0.1:9000/;listen = 127.0.0.1:9000/' /usr/local/php/etc/php-fpm.conf
+    # sed -i '/^;listen = 127.0.0.1:9000/a\listen = /tmp/php-fpm.sock' /usr/local/php/etc/php-fpm.conf
 
     #php-fpm
     
@@ -406,8 +408,10 @@ nginx() {
         worker_cpu_affinity=${worker_cpu_affinity}${cpumask}
     done
     worker_cpu_affinity=${worker_cpu_affinity}';'
-    
     sed -i "/^worker_processes/a\\$worker_cpu_affinity" /usr/local/nginx/conf/nginx.conf
+    sed -i "/^worker_cpu_affinity/a\worker_rlimit_nofile 8192;" /usr/local/nginx/conf/nginx.conf
+
+    sed -i "s/^.*worker_connections.*1024;$/    worker_connections 4096;/" /usr/local/nginx/conf/nginx.conf
     
     sed -i "/^events/a\    use epoll;" /usr/local/nginx/conf/nginx.conf
 
@@ -472,13 +476,19 @@ EOF
 
         # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
         # location ~ \.php$ {
-        location ~ .*\.(php|do|inc|tpl)?$ {
+        # location ~ .*\.(php|do|inc|tpl)?$ {
+        location ~ .*\.(php|do|inc|tpl)(/.+)$ {
+            fastcgi_split_path_info ^(.+\.php)(.*)$;
+            # NOTE: You should have "cgi.fix_pathinfo = 0;" in php.ini (why:http://www.laruence.com/2009/11/13/1138.html)
+
             if (!-f $document_root$fastcgi_script_name) {
                     return 404;
             }
             fastcgi_pass   127.0.0.1:9000;
+            # fastcgi_pass   unix:/tmp/php-fpm.sock;
             fastcgi_index  index.php;
             fastcgi_param  SCRIPT_FILENAME $document_root$fastcgi_script_name;
+            fastcgi_param  PATH_INFO       $fastcgi_path_info;
             include        fastcgi_params;
         }
         
@@ -518,13 +528,18 @@ EOF
 
         # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
         # location ~ \.php$ {
-        location ~ .*\.(php|do|inc|tpl)?$ {
+        location ~ .*\.(php|do|inc|tpl)(/.+)$ {
+            fastcgi_split_path_info ^(.+\.php)(.*)$;
+            # NOTE: You should have "cgi.fix_pathinfo = 0;" in php.ini (why:http://www.laruence.com/2009/11/13/1138.html)
+
             if (!-f $document_root$fastcgi_script_name) {
                     return 404;
             }
             fastcgi_pass   127.0.0.1:9000;
+            # fastcgi_pass   unix:/tmp/php-fpm.sock;
             fastcgi_index  index.php;
             fastcgi_param  SCRIPT_FILENAME $document_root$fastcgi_script_name;
+            fastcgi_param  PATH_INFO       $fastcgi_path_info;
             include        fastcgi_params;
         }
         
