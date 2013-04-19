@@ -755,21 +755,21 @@
     ### PART 1: Move web logs to the backup directory which named by year & month.
 
     LOGS_PATH=/usr/local/nginx/logs/
-    LOGS_NAME=(www.licunchang.com mysql.licunchang.com)
+    APP_NAME=(www.licunchang.com mysql.licunchang.com)
     LOGS_BACKUP=/data/logs/nginx/$(date -d "yesterday" +"%Y%m")/
 
     if [ ! -d $LOGS_BACKUP ]; then
         mkdir -p $LOGS_BACKUP
     fi
 
-    LOGS_NUM=${#LOGS_NAME[@]}
+    APP_NUM=${#APP_NAME[@]}
 
-    for ((i=0; i<$LOGS_NUM; i++)); do
-        if [ -f ${LOGS_PATH}${LOGS_NAME[i]}.access.log ]; then
-            mv ${LOGS_PATH}${LOGS_NAME[i]}.access.log ${LOGS_BACKUP}${LOGS_NAME[i]}.access_$(date -d "yesterday" +"%Y%m%d%H%M%S").log
+    for ((i=0; i<$APP_NUM; i++)); do
+        if [ -f ${LOGS_PATH}${APP_NAME[i]}.access.log ]; then
+            mv ${LOGS_PATH}${APP_NAME[i]}.access.log ${LOGS_BACKUP}${APP_NAME[i]}.access_$(date -d "yesterday" +"%Y%m%d%H%M%S").log
         fi
-        if [ -f ${LOGS_PATH}${LOGS_NAME[i]}.error.log ]; then
-            mv ${LOGS_PATH}${LOGS_NAME[i]}.error.log ${LOGS_BACKUP}${LOGS_NAME[i]}.error_$(date -d "yesterday" +"%Y%m%d%H%M%S").log
+        if [ -f ${LOGS_PATH}${APP_NAME[i]}.error.log ]; then
+            mv ${LOGS_PATH}${APP_NAME[i]}.error.log ${LOGS_BACKUP}${APP_NAME[i]}.error_$(date -d "yesterday" +"%Y%m%d%H%M%S").log
         fi
     done
 
