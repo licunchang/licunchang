@@ -11,6 +11,7 @@
 # 7 mcrypt-2.6.8.tar.gz
 # 8 mhash-0.9.9.9.tar.gz
 # 9 libmcrypt-2.5.8.tar.gz
+# 10 xdebug-2.2.2.tgz
 
 # source directory: /usr/local/src
 
@@ -873,6 +874,33 @@ EOF
     return #?
 }
 
+# install xdebug 2.2.2
+xdebug() {
+
+    cd /usr/local/src/
+    tar -xzf xdebug-2.2.2.tgz
+    cd /usr/local/src/xdebug-2.2.2/
+    /usr/local/php/bin/phpize
+    ./configure --enable-xdebug --with-php-config=/usr/local/php/bin/php-config
+
+    mkdir -p /usr/local/php/ext/
+    mv /usr/local/php/lib/php/extensions/no-debug-non-zts-20100525/xdebug.so /usr/local/php/ext/
+
+    sed -i '/^; extension_dir = "\.\/"$/a\
+extension_dir = /usr/local/php/ext/' /usr/local/php/etc/php.ini
+
+    sed -i '/^; Local Variables:$/i\
+[xdebug]\
+zend_extension="/usr/local/php/ext/xdebug.so"\
+xdebug.default_enable=1\
+xdebug.auto_profile=1\
+' /usr/local/php/etc/php.ini
+
+    /data/scripts/php-fpm restart
+
+    return #?
+}
+
 #MySQL
 if [ -d "/usr/local/src/mysql-5.5.30" ]; then
     mysql
@@ -886,4 +914,9 @@ fi
 #nginx
 if [ -d "/usr/local/src/nginx-1.2.7" ]; then
     nginx
+fi
+
+#xdebug
+if [ -f "/usr/local/src/xdebug-2.2.2.tgz" ]; then
+    xdebug
 fi
