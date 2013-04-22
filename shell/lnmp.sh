@@ -12,6 +12,7 @@
 # 8 mhash-0.9.9.9.tar.gz
 # 9 libmcrypt-2.5.8.tar.gz
 # 10 xdebug-2.2.2.tgz
+# 11 percona-xtrabackup-2.0.6.tar.gz
 
 # source directory: /usr/local/src
 
@@ -364,7 +365,7 @@ php() {
 
     /data/scripts/php-fpm start
     
-    return #?
+    return $?
 }
 
 # install nginx 1.2.7
@@ -873,7 +874,7 @@ EOF
     
     echo "00 00 * * * /bin/bash /data/cron/nginx_logs_cut.sh" >> /var/spool/cron/root
 
-    return #?
+    return $?
 }
 
 # install xdebug 2.2.2
@@ -900,7 +901,45 @@ xdebug.auto_profile=1\
 
     /data/scripts/php-fpm restart
 
-    return #?
+    return $?
+}
+
+# install xdebug 2.2.2
+xtrabackup() {
+
+    cd /usr/local/src/
+
+    if [ ! -f "/usr/local/src/mysql-5.5.17.tar.gz" ]; then
+        echo "error:miss mysql-5.5.17.tar.gz"
+        exit 1
+    fi
+
+    cp /usr/local/src/mysql-5.5.17.tar.gz /usr/local/src/percona-xtrabackup-2.0.6
+    cd /usr/local/src/percona-xtrabackup-2.0.6
+    ./utils/build.sh innodb55
+
+    mkdir -p /usr/local/xtrabackup
+
+    cp ./innobackupex /usr/local/xtrabackup/
+    cp ./src/xtrabackup_innodb55 /usr/local/xtrabackup/
+    ln -s /usr/local/xtrabackup/xtrabackup_innodb55 /usr/local/xtrabackup/xtrabackup_55
+    cp ./src/xbstream /usr/local/xtrabackup/
+
+    /usr/local/mysql/bin/mysql -uroot -proot -P3306 <<'EOF'
+CREATE USER 'xtrabackup'@'localhost' IDENTIFIED BY 'xtrabackup';
+GRANT RELOAD, LOCK TABLES, REPLICATION CLIENT ON *.* TO 'xtrabackup'@'localhost';
+FLUSH PRIVILEGES;
+EOF
+
+    mkdir -p /data/cron/
+    cat > /data/cron/mysql_xtrabackup.sh <<'EOF'
+#!/bin/bash
+#description    backup mysql data files, run at 0:00 everyday
+#crontab        00 00 * * * /bin/bash /data/cron/nginx_logs_cut.sh
+#author         LiCunchang(printf@live.com)
+
+EOF
+    return $?
 }
 
 #MySQL
@@ -921,4 +960,9 @@ fi
 #xdebug
 if [ -f "/usr/local/src/xdebug-2.2.2.tgz" ]; then
     xdebug
+fi
+
+#xtrabackup
+if [ -d "/usr/local/src/percona-xtrabackup-2.0.6" ]; then
+    xtrabackup
 fi
