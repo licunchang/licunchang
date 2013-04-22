@@ -160,7 +160,7 @@ rewrite 只能操作 `/user/info` 这一部分，也就是变量 `$uri` 的值�
         }
     }
 
-### 2.5 rewrite_log
+### 2.5 rewrite\_log
 
 > **syntax:**    `rewrite_log on | off;`  
 > **default:**    `rewrite_log off;`  
@@ -175,7 +175,7 @@ rewrite 只能操作 `/user/info` 这一部分，也就是变量 `$uri` 的值�
 
 为指定变量 variable 设置变量值 value。 value 可以包含文本、变量或者它们的组合。
 
-### 2.7 uninitialized_variable_warn
+### 2.7 uninitialized\_variable\_warn
 
 > **syntax:**    `uninitialized_variable_warn on | off;`  
 > **default:**    `uninitialized_variable_warn on;`  
