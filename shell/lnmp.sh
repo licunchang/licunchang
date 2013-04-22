@@ -174,7 +174,9 @@ log-warnings\
 long_query_time=2\
 slow-query-log\
 log-queries-not-using-indexes\
-innodb_file_per_table' /etc/mysql/my.cnf
+innodb_file_per_table
+open_files_limit=65535
+max_connections=1024' /etc/mysql/my.cnf
 
     ## Uncomment the following if you are using InnoDB tables
     #innodb_data_home_dir = /data/mysql
