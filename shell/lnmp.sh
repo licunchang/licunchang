@@ -454,6 +454,11 @@ http {
         rewrite ^(.*) http://www.licunchang.com$1 permanent;
     }
 
+    # if the client didn't give a user_agent, return 412
+    if ($http_user_agent ~ ^$) {
+        return 412;
+    }
+
     include /usr/local/nginx/conf/servers/*.conf;
 
 }
@@ -562,6 +567,20 @@ EOF
         }
     }
 EOF
+
+cat > /usr/local/nginx/conf/servers/status.licunchang.com.conf <<'EOF'
+    server {
+        listen  80;
+        server_name  status.licunchang.com;
+
+        location / {
+            # allow 10.10.10.0/24;
+            stub_status on;
+            access_log   off;
+        }
+    }
+EOF
+
     #ip=`/sbin/ifconfig eth0 | awk '/inet addr/ {print $2}' | awk -F: '{print $2}'`
     #mask=`/sbin/ifconfig eth0 | awk '/inet addr/ {print $4}' | awk -F: '{print $2}'`
     
@@ -885,7 +904,9 @@ xdebug() {
     cd /usr/local/src/xdebug-2.2.2/
     /usr/local/php/bin/phpize
     ./configure --enable-xdebug --with-php-config=/usr/local/php/bin/php-config
-
+    make
+    make install
+    
     mkdir -p /usr/local/php/ext/
     mv /usr/local/php/lib/php/extensions/no-debug-non-zts-20100525/xdebug.so /usr/local/php/ext/
 

@@ -542,6 +542,23 @@
 
     cd /data/web/mysql.licunchang.com
 
+配置 nginx 状态监控应用
+
+    vi /usr/local/nginx/conf/servers/status.licunchang.com.conf
+
+    # BEGIN ------------------------------------------- status.licunchang.com.conf
+    server {
+        listen  80;
+        server_name  status.licunchang.com;
+
+        location / {
+            # allow 10.10.10.0/24;
+            stub_status on;
+            access_log   off;
+        }
+    }
+    # END --------------------------------------------- status.licunchang.com.conf
+
     chown www.www /data/web/mysql.licunchang.com  -R
     chmod 744 /data/web/mysql.licunchang.com  -R
     
