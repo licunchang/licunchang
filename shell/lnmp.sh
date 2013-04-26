@@ -2,17 +2,18 @@
 # description    Install nginx1.2.7 & mysql5.5.30 & php5.4.12 on CentOS6.4
 # author         LiCunchang(printf@live.com)
 
-# 1 nginx-1.2.7.tar.gz
-# 2 openssl-1.0.1e.tar.gz
-# 3 pcre-8.32.tar.gz
-# 4 mysql-5.5.30.tar.gz
-# 5 php-5.4.12.tar.gz
-# 6 libiconv-1.14.tar.gz
-# 7 mcrypt-2.6.8.tar.gz
-# 8 mhash-0.9.9.9.tar.gz
-# 9 libmcrypt-2.5.8.tar.gz
-# 10 xdebug-2.2.2.tgz
-# 11 percona-xtrabackup-2.0.6.tar.gz
+# 01 nginx-1.2.7.tar.gz
+# 02 openssl-1.0.1e.tar.gz
+# 03 pcre-8.32.tar.gz
+# 04 mysql-5.5.30.tar.gz
+# 05 php-5.4.12.tar.gz
+# 06 libiconv-1.14.tar.gz
+# 07 mcrypt-2.6.8.tar.gz
+# 08 mhash-0.9.9.9.tar.gz
+# 09 libmcrypt-2.5.8.tar.gz
+# 10 re2c-0.13.5.tar.gz
+# 11 xdebug-2.2.2.tgz
+# 12 percona-xtrabackup-2.0.6.tar.gz
 
 # source directory: /usr/local/src
 
@@ -250,6 +251,10 @@ php() {
 
     yum -y install libxml2 libjpeg freetype libpng gd curl fontconfig libxml2-devel curl-devel libjpeg-devel libpng-devel freetype-devel
 
+    cd /usr/local/src/re2c-0.13.5
+    make
+    make install
+
     cd /usr/local/src/libiconv-1.14
     ./configure --prefix=/usr/local/libiconv
     make
@@ -277,7 +282,7 @@ php() {
     ./configure --prefix=/usr/local/mcrypt --with-libmcrypt-prefix=/usr/local/libmcrypt
     make
     make install
-    
+
     /usr/sbin/groupadd www
     /usr/sbin/useradd -M -g www www -s /bin/false
 
@@ -609,6 +614,8 @@ cat > /usr/local/nginx/conf/servers/status.licunchang.com.conf <<'EOF'
         }
     }
 EOF
+
+    sed -i 's#nginx/#Microsoft-IIS/#' /usr/local/nginx/conf/fastcgi_params
 
     #ip=`/sbin/ifconfig eth0 | awk '/inet addr/ {print $2}' | awk -F: '{print $2}'`
     #mask=`/sbin/ifconfig eth0 | awk '/inet addr/ {print $4}' | awk -F: '{print $2}'`

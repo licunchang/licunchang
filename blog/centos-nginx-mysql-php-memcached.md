@@ -57,6 +57,7 @@
 *  libmcrypt-2.5.8.tar.gz
 *  libevent-2.0.21-stable.tar.gz
 *  memcached-1.4.15.tar.gz
+*  re2c-0.13.5.tar.gz
 
 所有的源码包放置在/usr/local/src目录下。
 
@@ -274,6 +275,12 @@
     /usr/sbin/useradd -M -g www www -s /bin/false
     
 ### 3.4 安装php
+
+    cd /usr/local/src
+    tar zxvf re2c-0.13.5.tar.gz
+    ./configure
+    make
+    make install
 
     cd /usr/local/src
     tar zxvf php-5.4.12.tar.gz
