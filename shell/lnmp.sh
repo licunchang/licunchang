@@ -305,6 +305,35 @@ php() {
     # sed -i 's/^listen = 127.0.0.1:9000/;listen = 127.0.0.1:9000/' /usr/local/php/etc/php-fpm.conf
     # sed -i '/^;listen = 127.0.0.1:9000/a\listen = /tmp/php-fpm.sock' /usr/local/php/etc/php-fpm.conf
 
+    sed -i 's/^;listen.backlog/listen.backlog/' /usr/local/php/etc/php-fpm.conf
+    sed -i 's/^;pm.max_requests = 500$/pm.max_requests = 5000/' /usr/local/php/etc/php-fpm.conf
+
+    # CPU core number
+    CPU_CORE_NUMBER=`more /proc/cpuinfo | grep "model name" | wc -l`
+    
+    # Free Memory
+    MEMORY_FREE=`free -m | grep Mem | awk '{print $4}'`
+
+    PHP_FPM_MAX_PROCESSOR=`expr $MEMORY_FREE / 30`
+
+    PM_MAX_CHILDREN=`expr $CPU_CORE_NUMBER \* 2`
+
+    if [[ "$PHP_FPM_MAX_PROCESSOR" -ge "$PM_MAX_CHILDREN" ]]; then
+        sed -i 's/^pm = dynamic$/pm = static/' /usr/local/php/etc/php-fpm.conf
+        sed -i "s/^pm.max_children = 5\$/pm.max_children = $PM_MAX_CHILDREN/" /usr/local/php/etc/php-fpm.conf
+        sed -i "s/^pm.start_servers = 2\$/pm.start_servers = $PM_MAX_CHILDREN/" /usr/local/php/etc/php-fpm.conf
+        sed -i 's/^pm.min_spare_servers = 1$/pm.min_spare_servers = 0/' /usr/local/php/etc/php-fpm.conf
+        sed -i "s/^pm.max_spare_servers = 3\$/pm.max_spare_servers = $PM_MAX_CHILDREN/" /usr/local/php/etc/php-fpm.conf
+        sed -i 's/^;pm.max_requests = 500$/pm.max_requests = 5000/' /usr/local/php/etc/php-fpm.conf
+    else
+        #sed -i 's/^pm = dynamic$/pm = static/' /usr/local/php/etc/php-fpm.conf
+        sed -i "s/^pm.max_children = 5\$/pm.max_children = $PM_MAX_CHILDREN/" /usr/local/php/etc/php-fpm.conf
+        sed -i "s/^pm.start_servers = 2\$/pm.start_servers = $CPU_CORE_NUMBER/" /usr/local/php/etc/php-fpm.conf
+        sed -i 's/^pm.min_spare_servers = 1$/pm.min_spare_servers = 2/' /usr/local/php/etc/php-fpm.conf
+        sed -i "s/^pm.max_spare_servers = 3\$/pm.max_spare_servers = $CPU_CORE_NUMBER/" /usr/local/php/etc/php-fpm.conf
+        sed -i 's/^;pm.max_requests = 500$/pm.max_requests = 5000/' /usr/local/php/etc/php-fpm.conf
+    fi
+
     #php-fpm
     
     # Choose how the process manager will control the number of child processes.
