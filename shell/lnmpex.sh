@@ -275,7 +275,28 @@ tcpdump() {
     make install
     return $?
 }
---prefix
+
+# install awstats-7.1.1.tar.gz
+awstats() {
+
+    cd /usr/local/src
+    source_file=/usr/local/src/awstats-7.1.1.tar.gz
+    if [ -f $source_file ]; then
+        tar zxvf $source_file
+    else
+        echo "[error] $source_file not found."
+        exit 6
+    fi
+
+    mkdir -p /usr/local/awstats
+
+    cp -R /usr/local/src/awstats-7.1.1/* /usr/local/awstats/
+    perl awstats_configure.pl <<'EOF'
+    
+EOF
+}
+
+
 
 case "$1" in
     xtrabackup)

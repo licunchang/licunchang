@@ -15,6 +15,10 @@ MySQL Character Set & Collation 介绍
 
 nginx rewrite 模块入门
 
+### nginx-log-analyzer-awstats.md
+
+nginx 日志分析工具 awstats
+
 ### php-interview-questions-and-answers.md
 
 PHP 笔试题目(英文 & 中文)
