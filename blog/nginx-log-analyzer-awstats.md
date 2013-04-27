@@ -71,24 +71,26 @@ awstats_configure.pl 文件能自动帮你生成配置文件，同时将配置�
 配置 nginx server，然后就可以通过域名访问统计数据。
 
     cat > /usr/local/nginx/conf/servers/awstats.licunchang.com.conf <<'EOF'
-server {
-    listen       80;
-    server_name  awstats.licunchang.com;
+    server {
+        listen       80;
+        server_name  awstats.licunchang.com;
 
-    root /data/web/awstats.licunchang.com;
-    index index.html;
+        root /data/web/awstats.licunchang.com;
+        index index.html;
 
-    location / {
-        # allow 10.10.10.0/24;
-        autoindex on;
-        access_log   off;
-        error_log off;
+        location / {
+            # allow 10.10.10.0/24;
+            autoindex on;
+            access_log   off;
+            error_log off;
+        }
     }
-}
-EOF
+    EOF
 
-cp -R /usr/local/awstats/wwwroot/icon/* /data/web/awstats.licunchang.com/awstatsicons/
-cp -R /usr/local/awstats/wwwroot/css/* /data/web/awstats.licunchang.com/awstatscss/
+将图标和 css 文件拷贝到 web 目录下
+
+    cp -R /usr/local/awstats/wwwroot/icon/* /data/web/awstats.licunchang.com/awstatsicons/
+    cp -R /usr/local/awstats/wwwroot/css/* /data/web/awstats.licunchang.com/awstatscss/
 
 ## 4 Crontab
 
