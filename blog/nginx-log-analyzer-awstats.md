@@ -1,8 +1,8 @@
-**File Name** nginx-log-analyzer-awstats.md
+**File Name** nginx-log-analyzer-awstats.md    
 
-**Description** nginx 日志分析工具 awstats 
-**Author** LiCunchang(printf@live.com)  
-**Version** 1.0.20130427  
+**Description** nginx 日志分析工具 awstats    
+**Author** LiCunchang(printf@live.com)    
+**Version** 1.0.20130427    
 
 ------
 
@@ -37,7 +37,7 @@ awstats_configure.pl 文件能自动帮你生成配置文件，同时将配置�
 
 修改以下配置
 
-    LogFile="/data/logs/nginx/%YYYY-12%MM-12/www.licunchang.com.access_%YYYY-12%MM-12%DD-12*.log"
+    LogFile="/data/logs/nginx/%YYYY-24%MM-24/www.licunchang.com.access_%YYYY-24%MM-24%DD-24*.log"
     LogType = W
     LogFormat = "%host - %host_r %time1 %methodurl %code %bytesd %refererquot %uaquot %otherquot"
     LogSeparator=" "
@@ -80,6 +80,7 @@ awstats_configure.pl 文件能自动帮你生成配置文件，同时将配置�
 
         location / {
             # allow 10.10.10.0/24;
+            # deny all;
             autoindex on;
             access_log   off;
             error_log off;
@@ -89,10 +90,14 @@ awstats_configure.pl 文件能自动帮你生成配置文件，同时将配置�
 
 将图标和 css 文件拷贝到 web 目录下
 
+    mkdir -p /data/web/awstats.licunchang.com/awstatsicons/
+    mkdir -p /data/web/awstats.licunchang.com/awstatscss/
+
     cp -R /usr/local/awstats/wwwroot/icon/* /data/web/awstats.licunchang.com/awstatsicons/
     cp -R /usr/local/awstats/wwwroot/css/* /data/web/awstats.licunchang.com/awstatscss/
 
 ## 4 Crontab
 
-
-
+    #nginx logfile analyzer awstats
+    00 04 * * * /usr/local/awstats/wwwroot/cgi-bin/awstats.pl -update -config=www.licunchang.com
+    00 05 * * * /usr/local/awstats/tools/awstats_buildstaticpages.pl -update -config=www.licunchang.com -lang=cn -dir=/data/web/awstats.licunchang.com -awstatsprog=/usr/local/awstats/wwwroot/cgi-bin/awstats.pl

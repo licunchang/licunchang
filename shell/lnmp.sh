@@ -611,6 +611,7 @@ cat > /usr/local/nginx/conf/servers/status.licunchang.com.conf <<'EOF'
 
         location / {
             # allow 10.10.10.0/24;
+            # deny all;
             stub_status on;
             access_log   off;
         }
