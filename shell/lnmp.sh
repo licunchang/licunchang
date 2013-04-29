@@ -971,6 +971,8 @@ xdebug.auto_profile=1\
 # install xdebug 2.2.2
 xtrabackup() {
 
+    yum -y install cmake gcc gcc-c++ patch libaio libaio-devel automake autoconf bzr bison libtool ncurses-devel zlib-devel perl-Time-HiRes
+
     cd /usr/local/src/
 
     if [ ! -f "/usr/local/src/mysql-5.5.17.tar.gz" ]; then
