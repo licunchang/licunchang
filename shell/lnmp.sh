@@ -528,9 +528,7 @@ EOF
         error_page   500 502 503 504  /50x.html;
 
         # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
-        # location ~ \.php$ {
-        # location ~ .*\.(php|do|inc|tpl)?$ {
-        location ~ .*\.php(/.+)$ {
+        location ~ \.php {
             fastcgi_split_path_info ^(.+\.php)(.*)$;
             # NOTE: You should have "cgi.fix_pathinfo = 0;" in php.ini (why:http://www.laruence.com/2009/11/13/1138.html)
 
@@ -580,8 +578,7 @@ EOF
         error_page   500 502 503 504  /50x.html;
 
         # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
-        # location ~ \.php$ {
-        location ~ .*\.php(/.+)$ {
+        location ~ \.php {
             fastcgi_split_path_info ^(.+\.php)(.*)$;
             # NOTE: You should have "cgi.fix_pathinfo = 0;" in php.ini (why:http://www.laruence.com/2009/11/13/1138.html)
 
@@ -617,7 +614,8 @@ cat > /usr/local/nginx/conf/servers/status.licunchang.com.conf <<'EOF'
             # allow 10.10.10.0/24;
             # deny all;
             stub_status on;
-            access_log   off;
+            access_log  off;
+            error_log off;
         }
     }
 EOF
