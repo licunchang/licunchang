@@ -5,7 +5,7 @@ LiCunchang(printf@live.com)
 
 ### centos-nginx-mysql-php-memcached.md
 
-CentOS 6.4 下安装 Nginx-1.2.7 MySQL-5.5.30 PHP-5.4.12 Memcached-1.4.15 步骤。
+CentOS 下安装 Nginx MySQL PHP Memcached 步骤。
 
 ### mysql-character-set-collation.md
 
@@ -27,15 +27,15 @@ PHP 笔试题目(英文 & 中文)
 
 ### lamp.sh
 
-CentOS 6.4 下安装 httpd-2.2.24 MySQL-5.5.30 PHP-5.4.12 脚本。
+CentOS 下安装 httpd MySQL PHP 脚本。
 
 ### lnmp.sh
 
-CentOS 6.4 下安装 Nginx-1.2.7 MySQL-5.5.30 PHP-5.4.12 脚本，是 **centos-nginx-mysql-php-memcached.md** 的实现。
+CentOS 下安装 Nginx MySQL PHP 脚本，是 **centos-nginx-mysql-php-memcached.md** 的实现。
 
 ### lnmpex.sh
 
-CentOS 6.4 下安装 xtrabackup & memcached & redis & varnish & tcpdump 等。
+CentOS 下安装 xtrabackup & memcached & redis & varnish & tcpdump 等。
 
 ### nginx.init.d
 
