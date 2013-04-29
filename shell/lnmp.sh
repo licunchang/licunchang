@@ -14,6 +14,7 @@
 # 10 re2c-0.13.5.tar.gz
 # 11 xdebug-2.2.2.tgz
 # 12 percona-xtrabackup-2.0.6.tar.gz
+# 13 mysql-5.5.17.tar.gz
 
 # source directory: /usr/local/src
 
@@ -82,7 +83,7 @@ EOF
 
 yum makecache
 
-yum -y install make cmake gcc gcc-c++ chkconfig automake autoconf
+yum -y install make cmake gcc gcc-c++ chkconfig automake autoconf libtool
 
 cd /usr/local/src
 
@@ -176,8 +177,8 @@ log-warnings\
 long_query_time=2\
 slow-query-log\
 log-queries-not-using-indexes\
-innodb_file_per_table
-open_files_limit=65535
+innodb_file_per_table\
+open_files_limit=65535\
 max_connections=1024' /etc/mysql/my.cnf
 
     ## Uncomment the following if you are using InnoDB tables
@@ -252,12 +253,14 @@ php() {
     yum -y install libxml2 libjpeg freetype libpng gd curl fontconfig libxml2-devel curl-devel libjpeg-devel libpng-devel freetype-devel
 
     cd /usr/local/src/re2c-0.13.5
+    ./configure
     make
     make install
 
     cd /usr/local/src/libiconv-1.14
     ./configure --prefix=/usr/local/libiconv
     make
+    libtool --finish /usr/local/libiconv/lib
     make install
     
     cd /usr/local/src/libmcrypt-2.5.8
@@ -445,9 +448,9 @@ nginx() {
     do
         CPUMASK_UNFORMATTED=`echo "obase=2;$[ 2 ** $loop ]" | bc`
         CPUMASK=`printf " %0${CPU_CORE_NUMBER}d" $CPUMASK_UNFORMATTED`
-        worker_cpu_affinity=${WORKER_CPU_AFFINITY}${CPUMASK}
+        WORKER_CPU_AFFINITY=${WORKER_CPU_AFFINITY}${CPUMASK}
     done
-    worker_cpu_affinity=${WORKER_CPU_AFFINITY}';'
+    WORKER_CPU_AFFINITY=${WORKER_CPU_AFFINITY}';'
     sed -i "/^worker_processes/a\\$WORKER_CPU_AFFINITY" /usr/local/nginx/conf/nginx.conf
     sed -i "s/^.*worker_connections  1024;$/    worker_connections 8192;/" /usr/local/nginx/conf/nginx.conf
 
@@ -487,12 +490,13 @@ http {
 
     server {
         server_name licunchang.com;
-        rewrite ^(.*) http://www.licunchang.com$1 permanent;
-    }
+        
+        # if the client didn't give a user_agent, return 412
+        if ($http_user_agent ~ ^$) {
+            return 412;
+        }
 
-    # if the client didn't give a user_agent, return 412
-    if ($http_user_agent ~ ^$) {
-        return 412;
+        rewrite ^(.*) http://www.licunchang.com$1 permanent;
     }
 
     include /usr/local/nginx/conf/servers/*.conf;
