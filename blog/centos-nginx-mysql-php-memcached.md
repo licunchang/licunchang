@@ -1,6 +1,6 @@
 **File Name** centos-nginx-mysql-php-memcached.md  
 
-**Description** CentOS6.4下安装Nginx1.2.7-MySQL5.5.30-PHP5.4.12-Memcached1.4.15    
+**Description** CentOS6.4下安装Nginx1.2.8-MySQL5.5.31-PHP5.4.14-Memcached1.4.15    
 **Author** LiCunchang(printf@live.com)  
 **Version** 2.0.20130326  
 
@@ -46,11 +46,11 @@
 
 ### 1.3 所需源码包
 
-*  nginx-1.2.7.tar.gz
+*  nginx-1.2.8.tar.gz
 *  openssl-1.0.1e.tar.gz
 *  pcre-8.32.tar.gz
-*  mysql-5.5.30.tar.gz
-*  php-5.4.12.tar.gz
+*  mysql-5.5.31.tar.gz
+*  php-5.4.14.tar.gz
 *  libiconv-1.14.tar.gz
 *  mcrypt-2.6.8.tar.gz
 *  mhash-0.9.9.9.tar.gz
@@ -84,8 +84,8 @@
 ### 2.3 源码安装
 
     cd /usr/local/src
-    tar zxvf /usr/local/src/mysql-5.5.30.tar.gz
-    cd /usr/local/src/mysql-5.5.30
+    tar zxvf /usr/local/src/mysql-5.5.31.tar.gz
+    cd /usr/local/src/mysql-5.5.31
     cmake . -DCMAKE_INSTALL_PREFIX=/usr/local/mysql -DMYSQL_DATADIR=/data/mysql -DSYSCONFDIR=/etc/mysql -DDEFAULT_CHARSET=utf8 -DDEFAULT_COLLATION=utf8_general_ci -DWITH_EXTRA_CHARSETS=all -DWITH_INNOBASE_STORAGE_ENGINE=1 -DWITH_ARCHIVE_STORAGE_ENGINE=1 -DWITH_BLACKHOLE_STORAGE_ENGINE=1 -DWITH_PERFSCHEMA_STORAGE_ENGINE=1 -DWITHOUT_EXAMPLE_STORAGE_ENGINE=1 -DWITHOUT_FEDERATED_STORAGE_ENGINE=1 -DWITHOUT_PARTITION_STORAGE_ENGINE=1 -DWITH_READLINE=1 -DWITH_LIBWRAP=1 -DENABLED_LOCAL_INFILE=1 -DENABLED_PROFILING=1 -DMYSQL_TCP_PORT=3306 -DWITH_ZLIB=system
     make
     make install
@@ -116,7 +116,7 @@
 
 >This is a MySQL example config file for systems with 4GB of memory running mostly MySQL using InnoDB only tables and performing complex queries with few connections.    
 
-    cd /usr/local/src/mysql-5.5.30
+    cd /usr/local/src/mysql-5.5.31
     cp ./support-files/my-medium.cnf /etc/mysql/my.cnf
 
 编辑my.cnf文件
@@ -283,8 +283,8 @@
     make install
 
     cd /usr/local/src
-    tar zxvf php-5.4.12.tar.gz
-    cd /usr/local/src/php-5.4.12
+    tar zxvf php-5.4.14.tar.gz
+    cd /usr/local/src/php-5.4.14
     ./configure --prefix=/usr/local/php --with-config-file-path=/usr/local/php/etc --enable-bcmath --enable-shmop --enable-sysvsem --enable-ftp --with-curl --with-curlwrappers --with-png-dir --with-jpeg-dir --with-freetype-dir --with-gd --enable-gd-native-ttf --enable-mbstring --enable-soap --enable-sockets --enable-zip --with-xmlrpc --with-mysql=/usr/local/mysql --with-mysqli=/usr/local/mysql/bin/mysql_config --with-pdo-mysql=/usr/local/mysql/ --enable-fpm --with-fpm-user=www --with-fpm-group=www --with-zlib --with-iconv-dir=/usr/local/libiconv/ --with-pcre-dir=/usr/local/pcre --with-libxml-dir --with-mcrypt=/usr/local/libmcrypt/ --with-mhash=/usr/local/mhash/ --disable-ipv6
     make
     # make test #注意:make test可能有错
@@ -323,7 +323,7 @@
 
 ### 3.6 把 php-fpm 加入系统启动
 
-    cp /usr/local/src/php-5.4.12/sapi/fpm/init.d.php-fpm /etc/rc.d/init.d/php-fpm
+    cp /usr/local/src/php-5.4.14/sapi/fpm/init.d.php-fpm /etc/rc.d/init.d/php-fpm
     chmod 755 /etc/rc.d/init.d/php-fpm
     chkconfig --add php-fpm
     chkconfig --level 35 php-fpm on
@@ -348,13 +348,13 @@
     cd /usr/local/src
     tar zxvf openssl-1.0.1e.tar.gz
     
-    tar zxvf nginx-1.2.7.tar.gz
-    cd /usr/local/src/nginx-1.2.7
+    tar zxvf nginx-1.2.8.tar.gz
+    cd /usr/local/src/nginx-1.2.8
 
 安全原因，你可以修改 Nginx 的服务器标识信息
 
     sed -i 's/nginx\b/Microsoft-IIS/g' ./src/core/nginx.h
-    sed -i 's/1.2.7/7.5/' ./src/core/nginx.h
+    sed -i 's/1.2.8/7.5/' ./src/core/nginx.h
     sed -i 's/Server: nginx/Server: Microsoft-IIS/' ./src/http/ngx_http_header_filter_module.c
     sed -i 's/>nginx</>Microsoft-IIS</' ./src/http/ngx_http_special_response.c
     

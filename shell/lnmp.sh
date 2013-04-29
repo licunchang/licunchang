@@ -1,12 +1,12 @@
 #!/bin/bash
-# description    Install nginx1.2.7 & mysql5.5.30 & php5.4.12 on CentOS6.4
+# description    Install nginx1.2.8 & mysql5.5.31 & php5.4.14 on CentOS6.4
 # author         LiCunchang(printf@live.com)
 
-# 01 nginx-1.2.7.tar.gz
+# 01 nginx-1.2.8.tar.gz
 # 02 openssl-1.0.1e.tar.gz
 # 03 pcre-8.32.tar.gz
-# 04 mysql-5.5.30.tar.gz
-# 05 php-5.4.12.tar.gz
+# 04 mysql-5.5.31.tar.gz
+# 05 php-5.4.14.tar.gz
 # 06 libiconv-1.14.tar.gz
 # 07 mcrypt-2.6.8.tar.gz
 # 08 mhash-0.9.9.9.tar.gz
@@ -99,7 +99,7 @@ fi
 
 rm -f tar.list
 
-# install mysql5.5.30
+# install mysql5.5.31
 mysql() {
 
     # yum install zlib zlib-devel ncurses ncurses-devel bison
@@ -119,7 +119,7 @@ mysql() {
     mkdir -p /etc/mysql
     chown -R mysql:mysql /etc/mysql
 
-    cd /usr/local/src/mysql-5.5.30
+    cd /usr/local/src/mysql-5.5.31
     cmake . -DCMAKE_INSTALL_PREFIX=/usr/local/mysql -DMYSQL_DATADIR=/data/mysql -DSYSCONFDIR=/etc/mysql -DDEFAULT_CHARSET=utf8 -DDEFAULT_COLLATION=utf8_general_ci -DWITH_EXTRA_CHARSETS=all -DWITH_INNOBASE_STORAGE_ENGINE=1 -DWITH_ARCHIVE_STORAGE_ENGINE=1 -DWITH_BLACKHOLE_STORAGE_ENGINE=1 -DWITH_PERFSCHEMA_STORAGE_ENGINE=1 -DWITHOUT_EXAMPLE_STORAGE_ENGINE=1 -DWITHOUT_FEDERATED_STORAGE_ENGINE=1 -DWITHOUT_PARTITION_STORAGE_ENGINE=1 -DWITH_READLINE=1 -DWITH_LIBWRAP=1 -DENABLED_LOCAL_INFILE=1 -DENABLED_PROFILING=1 -DMYSQL_TCP_PORT=3306 -DWITH_ZLIB=system
     make
     make install
@@ -133,22 +133,22 @@ mysql() {
     
     if [ $MEMORY_FREE -le 128 ]; then
         echo "copy my-medium.cnf as the configuration file"
-        cp -f /usr/local/src/mysql-5.5.30/support-files/my-medium.cnf /etc/mysql/my.cnf
+        cp -f /usr/local/src/mysql-5.5.31/support-files/my-medium.cnf /etc/mysql/my.cnf
     fi
     
     if [ $MEMORY_FREE -le 512 -a $MEMORY_FREE -gt 128 ]; then
         echo "copy my-large.cnf as the configuration file"
-        cp -f /usr/local/src/mysql-5.5.30/support-files/my-large.cnf /etc/mysql/my.cnf
+        cp -f /usr/local/src/mysql-5.5.31/support-files/my-large.cnf /etc/mysql/my.cnf
     fi
     
     if [ $MEMORY_FREE -le 4096 -a $MEMORY_FREE -gt 512 ]; then
         echo "copy my-huge.cnf as the configuration file"
-        cp -f /usr/local/src/mysql-5.5.30/support-files/my-huge.cnf /etc/mysql/my.cnf
+        cp -f /usr/local/src/mysql-5.5.31/support-files/my-huge.cnf /etc/mysql/my.cnf
     fi
     
     if [ $MEMORY_FREE -gt 4096 ]; then
         echo "copy my-innodb-heavy-4G.cnf as the configuration file"
-        cp -f /usr/local/src/mysql-5.5.30/support-files/my-innodb-heavy-4G.cnf /etc/mysql/my.cnf
+        cp -f /usr/local/src/mysql-5.5.31/support-files/my-innodb-heavy-4G.cnf /etc/mysql/my.cnf
     fi
     
     #vi /etc/mysql/my.cnf
@@ -247,7 +247,7 @@ EOF
     return $?
 }
 
-#instal php 5.4.12
+#instal php 5.4.14
 php() {
 
     yum -y install libxml2 libjpeg freetype libpng gd curl fontconfig libxml2-devel curl-devel libjpeg-devel libpng-devel freetype-devel
@@ -289,12 +289,12 @@ php() {
     /usr/sbin/groupadd www
     /usr/sbin/useradd -M -g www www -s /bin/false
 
-    cd /usr/local/src/php-5.4.12
+    cd /usr/local/src/php-5.4.14
     ./configure --prefix=/usr/local/php --with-config-file-path=/usr/local/php/etc --enable-bcmath --enable-shmop --enable-sysvsem --enable-ftp --with-curl --with-curlwrappers --with-png-dir --with-jpeg-dir --with-freetype-dir --with-gd --enable-gd-native-ttf --enable-mbstring --enable-soap --enable-sockets --enable-zip --with-xmlrpc --with-mysql=/usr/local/mysql --with-mysqli=/usr/local/mysql/bin/mysql_config --with-pdo-mysql=/usr/local/mysql/ --enable-fpm --with-fpm-user=www --with-fpm-group=www --with-zlib --with-iconv-dir=/usr/local/libiconv/ --with-pcre-dir=/usr/local/pcre --with-libxml-dir --with-mcrypt=/usr/local/libmcrypt/ --with-mhash=/usr/local/mhash/ --disable-ipv6
     make
     make install
     
-    cp -f /usr/local/src/php-5.4.12/php.ini-production /usr/local/php/etc/php.ini
+    cp -f /usr/local/src/php-5.4.14/php.ini-production /usr/local/php/etc/php.ini
     rm -rf /etc/php.ini
 
     # vi /usr/local/php/etc/php.ini
@@ -398,7 +398,7 @@ php() {
     # Note: Mandatory when pm is set to 'dynamic'
     # pm.max_spare_servers = 3
 
-    cp -f /usr/local/src/php-5.4.12/sapi/fpm/init.d.php-fpm /data/scripts/php-fpm
+    cp -f /usr/local/src/php-5.4.14/sapi/fpm/init.d.php-fpm /data/scripts/php-fpm
     
     chmod 755 /data/scripts/php-fpm
 
@@ -407,7 +407,7 @@ php() {
     return $?
 }
 
-# install nginx 1.2.7
+# install nginx 1.2.8
 nginx() {
     
     cd /usr/local/src/pcre-8.32
@@ -415,10 +415,10 @@ nginx() {
     make
     make install
     
-    cd /usr/local/src/nginx-1.2.7
+    cd /usr/local/src/nginx-1.2.8
     
     sed -i 's/nginx\b/Microsoft-IIS/g' ./src/core/nginx.h
-    sed -i 's/1.2.7/7.5/' ./src/core/nginx.h
+    sed -i 's/1.2.8/7.5/' ./src/core/nginx.h
     sed -i 's/Server: nginx/Server: Microsoft-IIS/' ./src/http/ngx_http_header_filter_module.c
     sed -i 's/>nginx</>Microsoft-IIS</' ./src/http/ngx_http_special_response.c
     
@@ -1009,17 +1009,17 @@ EOF
 }
 
 #MySQL
-if [ -d "/usr/local/src/mysql-5.5.30" ]; then
+if [ -d "/usr/local/src/mysql-5.5.31" ]; then
     mysql
 fi
 
 #php
-if [ -d "/usr/local/src/php-5.4.12" ]; then
+if [ -d "/usr/local/src/php-5.4.14" ]; then
     php
 fi
 
 #nginx
-if [ -d "/usr/local/src/nginx-1.2.7" ]; then
+if [ -d "/usr/local/src/nginx-1.2.8" ]; then
     nginx
 fi
 
