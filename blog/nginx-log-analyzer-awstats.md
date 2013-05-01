@@ -23,6 +23,7 @@
 
 awstats_configure.pl 文件能自动帮你生成配置文件，同时将配置文件放在 /etc/awstats/ 目录下。
 
+    cd /usr/local/awstats/
     perl /usr/local/awstats/tools/awstats_configure.pl
 
 按照提示，输入相关的信息，对于 nginx 而言，提示
@@ -66,7 +67,9 @@ awstats_configure.pl 文件能自动帮你生成配置文件，同时将配置�
 
 因为 nginx 对 Perl 的支持不太好，所以需要把 awstats 的统计数据生成 html 展现出来
 
-    /usr/local/awstats/tools/awstats_buildstaticpages.pl -update -config=www.licunchang.com -lang=cn -dir=/data/web/awstats.licunchang.com -awstatsprog=/usr/local/awstats/wwwroot/cgi-bin/awstats.pl
+    /usr/local/awstats/tools/awstats_buildstaticpages.pl -update -config=www.licunchang.com -lang=cn -dir=/data/web/awstats.licunchang.com -awstatsprog=/usr/local/awstats/wwwroot/cgi-bin/awstats.pl -month=
+
+    -year
 
 配置 nginx server，然后就可以通过域名访问统计数据。
 
@@ -98,6 +101,40 @@ awstats_configure.pl 文件能自动帮你生成配置文件，同时将配置�
 
 ## 4 Crontab
 
+    crontab -e -uroot
+
     #nginx logfile analyzer awstats
-    00 04 * * * /usr/local/awstats/wwwroot/cgi-bin/awstats.pl -update -config=www.licunchang.com
-    00 05 * * * /usr/local/awstats/tools/awstats_buildstaticpages.pl -update -config=www.licunchang.com -lang=cn -dir=/data/web/awstats.licunchang.com -awstatsprog=/usr/local/awstats/wwwroot/cgi-bin/awstats.pl
+    00 04 * * * /bin/bash /data/cron/awstats.sh
+
+    #!/bin/bash
+    #
+    # this script run awstats log files analyzer tool
+    #
+    # 00 04 * * * /bin/bash /data/cron/awstats.sh
+
+    # sites separated by space
+    SITES=(www.licunchang.com)
+    SITES_NUM=${#SITES[@]}
+
+    YESTERDAY_MONTH=`date -d yesterday +%m`
+    TODAY_MONTH=`date -d today +%m`
+
+    if [[ ! -d /data/web/awstats.licunchang.com ]]; then
+        mkdir -p /data/web/awstats.licunchang.com
+    fi
+
+    for ((i=0; i<$SITES_NUM; i++)); do
+        /usr/local/awstats/wwwroot/cgi-bin/awstats.pl -update -config=${SITES[i]}
+
+        if [[ $YESTERDAY_MONTH -eq $TODAY_MONTH ]]; then
+            /usr/local/awstats/tools/awstats_buildstaticpages.pl -update -config=${SITES[i]} -lang=cn -dir=/data/web/awstats.licunchang.com -awstatsprog=/usr/local/awstats/wwwroot/cgi-bin/awstats.pl
+        fi
+
+        if [[ $YESTERDAY_MONTH -gt $TODAY_MONTH ]]; then
+            /usr/local/awstats/tools/awstats_buildstaticpages.pl -update -config=${SITES[i]} -lang=cn -dir=/data/web/awstats.licunchang.com -awstatsprog=/usr/local/awstats/wwwroot/cgi-bin/awstats.pl -year=$(date -d yesterday +%d) -month=${YESTERDAY_MONTH}
+        fi
+
+        if [[ $YESTERDAY_MONTH -lt $TODAY_MONTH ]]; then
+            /usr/local/awstats/tools/awstats_buildstaticpages.pl -update -config=${SITES[i]} -lang=cn -dir=/data/web/awstats.licunchang.com -awstatsprog=/usr/local/awstats/wwwroot/cgi-bin/awstats.pl -month=${YESTERDAY_MONTH}
+        fi
+    done
