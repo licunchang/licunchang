@@ -67,9 +67,7 @@ awstats_configure.pl 文件能自动帮你生成配置文件，同时将配置�
 
 因为 nginx 对 Perl 的支持不太好，所以需要把 awstats 的统计数据生成 html 展现出来
 
-    /usr/local/awstats/tools/awstats_buildstaticpages.pl -update -config=www.licunchang.com -lang=cn -dir=/data/web/awstats.licunchang.com -awstatsprog=/usr/local/awstats/wwwroot/cgi-bin/awstats.pl -month=
-
-    -year
+    /usr/local/awstats/tools/awstats_buildstaticpages.pl -update -config=www.licunchang.com -lang=cn -dir=/data/web/awstats.licunchang.com -awstatsprog=/usr/local/awstats/wwwroot/cgi-bin/awstats.pl
 
 配置 nginx server，然后就可以通过域名访问统计数据。
 
