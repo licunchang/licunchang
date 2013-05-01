@@ -507,117 +507,117 @@ EOF
     mkdir -p /usr/local/nginx/conf/servers/
     
     cat > /usr/local/nginx/conf/servers/www.licunchang.com.conf <<'EOF'
-    server {
-        listen       80;
-        server_name  www.licunchang.com;
-        
-        root   /data/web/www.licunchang.com;
-        
-        #charset utf-8;
+server {
+    listen       80;
+    server_name  www.licunchang.com;
+    
+    root   /data/web/www.licunchang.com;
+    
+    #charset utf-8;
 
-        access_log  /usr/local/nginx/logs/www.licunchang.com.access.log  main;
+    access_log  /usr/local/nginx/logs/www.licunchang.com.access.log  main;
 
-        location / {
-            index  index.php index.html;
-        }
-
-        error_page  404              /404.html;
-
-        # redirect server error pages to the static page /50x.html
-        #
-        error_page   500 502 503 504  /50x.html;
-
-        # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
-        location ~ \.php {
-            fastcgi_split_path_info ^(.+\.php)(.*)$;
-            # NOTE: You should have "cgi.fix_pathinfo = 0;" in php.ini (why:http://www.laruence.com/2009/11/13/1138.html)
-
-            if (!-f $document_root$fastcgi_script_name) {
-                    return 404;
-            }
-            fastcgi_pass   127.0.0.1:9000;
-            # fastcgi_pass   unix:/tmp/php-fpm.sock;
-            fastcgi_index  index.php;
-            fastcgi_param  SCRIPT_FILENAME $document_root$fastcgi_script_name;
-            fastcgi_param  PATH_INFO       $fastcgi_path_info;
-            include        fastcgi_params;
-        }
-        
-        location ~ .*\.(gif|jpg|jpeg|png|bmp|swf|js|ico|css)$ {
-            expires      360d;
-        }
-
-        location ~ /\. {
-            access_log off;
-            log_not_found off; 
-            deny all;
-        }
+    location / {
+        index  index.php index.html;
     }
+
+    error_page  404              /404.html;
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+
+    # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+    location ~ \.php {
+        fastcgi_split_path_info ^(.+\.php)(.*)$;
+        # NOTE: You should have "cgi.fix_pathinfo = 0;" in php.ini (why:http://www.laruence.com/2009/11/13/1138.html)
+
+        if (!-f $document_root$fastcgi_script_name) {
+                return 404;
+        }
+        fastcgi_pass   127.0.0.1:9000;
+        # fastcgi_pass   unix:/tmp/php-fpm.sock;
+        fastcgi_index  index.php;
+        fastcgi_param  SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param  PATH_INFO       $fastcgi_path_info;
+        include        fastcgi_params;
+    }
+    
+    location ~ .*\.(gif|jpg|jpeg|png|bmp|swf|js|ico|css)$ {
+        expires      360d;
+    }
+
+    location ~ /\. {
+        access_log off;
+        log_not_found off; 
+        deny all;
+    }
+}
 EOF
 
     cat > /usr/local/nginx/conf/servers/mysql.licunchang.com.conf <<'EOF'
-    server {
-        listen       80;
-        server_name  mysql.licunchang.com;
-        
-        root   /data/web/mysql.licunchang.com;
-        
-        #charset utf-8;
+server {
+    listen       80;
+    server_name  mysql.licunchang.com;
+    
+    root   /data/web/mysql.licunchang.com;
+    
+    #charset utf-8;
 
-        access_log  /usr/local/nginx/logs/mysql.licunchang.com.access.log  main;
+    access_log  /usr/local/nginx/logs/mysql.licunchang.com.access.log  main;
 
-        location / {
-            allow  10.10.10.0/24;
-            index  index.php index.html;
-        }
-
-        error_page  404              /404.html;
-
-        # redirect server error pages to the static page /50x.html
-        #
-        error_page   500 502 503 504  /50x.html;
-
-        # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
-        location ~ \.php {
-            fastcgi_split_path_info ^(.+\.php)(.*)$;
-            # NOTE: You should have "cgi.fix_pathinfo = 0;" in php.ini (why:http://www.laruence.com/2009/11/13/1138.html)
-
-            if (!-f $document_root$fastcgi_script_name) {
-                    return 404;
-            }
-            fastcgi_pass   127.0.0.1:9000;
-            # fastcgi_pass   unix:/tmp/php-fpm.sock;
-            fastcgi_index  index.php;
-            fastcgi_param  SCRIPT_FILENAME $document_root$fastcgi_script_name;
-            fastcgi_param  PATH_INFO       $fastcgi_path_info;
-            include        fastcgi_params;
-        }
-        
-        location ~ .*\.(gif|jpg|jpeg|png|bmp|swf|js|ico|css)$ {
-            expires      360d;
-        }
-
-        location ~ /\. {
-            access_log off;
-            log_not_found off; 
-            deny all;
-        }
+    location / {
+        allow  10.10.10.0/24;
+        index  index.php index.html;
     }
+
+    error_page  404              /404.html;
+
+    # redirect server error pages to the static page /50x.html
+    #
+    error_page   500 502 503 504  /50x.html;
+
+    # pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+    location ~ \.php {
+        fastcgi_split_path_info ^(.+\.php)(.*)$;
+        # NOTE: You should have "cgi.fix_pathinfo = 0;" in php.ini (why:http://www.laruence.com/2009/11/13/1138.html)
+
+        if (!-f $document_root$fastcgi_script_name) {
+                return 404;
+        }
+        fastcgi_pass   127.0.0.1:9000;
+        # fastcgi_pass   unix:/tmp/php-fpm.sock;
+        fastcgi_index  index.php;
+        fastcgi_param  SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param  PATH_INFO       $fastcgi_path_info;
+        include        fastcgi_params;
+    }
+    
+    location ~ .*\.(gif|jpg|jpeg|png|bmp|swf|js|ico|css)$ {
+        expires      360d;
+    }
+
+    location ~ /\. {
+        access_log off;
+        log_not_found off; 
+        deny all;
+    }
+}
 EOF
 
 cat > /usr/local/nginx/conf/servers/status.licunchang.com.conf <<'EOF'
-    server {
-        listen  80;
-        server_name  status.licunchang.com;
+server {
+    listen  80;
+    server_name  status.licunchang.com;
 
-        location / {
-            # allow 10.10.10.0/24;
-            # deny all;
-            stub_status on;
-            access_log  off;
-            error_log off;
-        }
+    location / {
+        # allow 10.10.10.0/24;
+        # deny all;
+        stub_status on;
+        access_log  off;
+        error_log off;
     }
+}
 EOF
 
     sed -i 's#nginx/#Microsoft-IIS/#' /usr/local/nginx/conf/fastcgi_params
