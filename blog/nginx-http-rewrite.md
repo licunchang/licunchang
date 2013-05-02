@@ -166,7 +166,7 @@ rewrite 只能操作 `/user/info` 这一部分，也就是变量 `$uri` 的值�
 > **default:**    `rewrite_log off;`  
 > **context:**    server, location, if
 
-开启或者关闭将 ngx_http_rewrite_module 模块指令的处理日志以 notice 级别记录到错误日志( error_log )中。
+开启或者关闭将 ngx\_http\_rewrite\_module 模块指令的处理日志以 notice 级别记录到错误日志( error\_log )中。
 
 ### 2.6 set
 
