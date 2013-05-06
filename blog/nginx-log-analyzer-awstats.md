@@ -44,6 +44,7 @@ awstats_configure.pl 文件能自动帮你生成配置文件，同时将配置�
     LogSeparator=" "
     SiteDomain="www.licunchang.com"
     DirData="/data/awstats"
+    LoadPlugin="decodeutfkeys"
 
 其中 `LogFile`对应的是要分析的日志的完整路径，`LogFormat` 对应的是 nginx 默认的 main 日志格式，如下：
 
