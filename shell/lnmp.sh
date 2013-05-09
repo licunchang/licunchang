@@ -466,7 +466,7 @@ nginx() {
     cat >> /usr/local/nginx/conf/nginx.conf <<'EOF'
 http {
 
-    #server_tokens off;
+    server_tokens on;
     include       mime.types;
     default_type  application/octet-stream;
 
@@ -476,10 +476,21 @@ http {
 
     access_log  logs/access.log  main;
 
-    sendfile        on;
+    sendfile  on;
+    tcp_nopush  on;
 
-    keepalive_timeout  60;
+    keepalive_timeout  10;
+    send_timeout  10;
 
+    client_body_buffer_size  8k;
+    client_max_body_size 8m;
+    client_body_timeout 10;
+
+    client_header_buffer_size 8k;
+    large_client_header_buffers 4 8k;
+    client_header_timeout 10;
+
+    # gzip configuration
     gzip on;
     gzip_min_length  1k;
     gzip_buffers     4 16k;
@@ -508,7 +519,7 @@ EOF
     
     cat > /usr/local/nginx/conf/servers/www.licunchang.com.conf <<'EOF'
 server {
-    listen       80;
+    listen  80  default_server; 
     server_name  www.licunchang.com;
     
     root   /data/web/www.licunchang.com;
@@ -521,7 +532,7 @@ server {
         index  index.php index.html;
     }
 
-    error_page  404              /404.html;
+    error_page  404  /404.html;
 
     # redirect server error pages to the static page /50x.html
     #
@@ -571,7 +582,7 @@ server {
         index  index.php index.html;
     }
 
-    error_page  404              /404.html;
+    error_page  404  /404.html;
 
     # redirect server error pages to the static page /50x.html
     #
