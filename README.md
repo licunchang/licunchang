@@ -1,4 +1,4 @@
-LiCunchang(printf@live.com)[![新浪微博](http://img.t.sinajs.cn/t4/style/images/staticlogo/download/Buttons/16x16/Weibo_Buttons_16x16_gold_back.png)](http://weibo.com/licunchang) 
+LiCunchang(printf@live.com)[![新浪微博](http://img.t.sinajs.cn/t4/style/images/staticlogo/download/Buttons/48x48/Weibo_Buttons_48x48_gold_back.png)](http://weibo.com/licunchang) 
 ==========
 
 ## blog
