@@ -23,6 +23,10 @@ nginx 日志分析工具 awstats
 
 PHP 笔试题目(英文 & 中文)
 
+### php-sudoku.md
+
+PHP 递归计算所谓“世界最难数独游戏”
+
 ## shell
 
 ### lamp.sh
