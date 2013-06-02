@@ -6,7 +6,7 @@
 
 ------
 
-有两张表：**department** 和 **employee**，数据结构和数据如下：
+有两张表: **department** 和 **employee**，数据结构和数据如下：
 
 **department**
 
