@@ -1,4 +1,4 @@
-**File Name** sql-joins.md  
+**File Name** sql-join.md  
 
 **Description** SQL 中的 join   
 **Author** LiCunchang(printf@live.com)  
