@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# nginx - this script starts and stops the nginx daemon
+# nginx    Start/Stop the cron clock daemon.
 #
 # chkconfig: 35 85 15
 # description: Nginx is an HTTP and reverse proxy server, as well as a mail proxy server.
@@ -10,69 +10,113 @@
 # config:   /usr/local/nginx/conf/nginx.conf
 # pidfile:  /usr/local/nginx/logs/nginx.pid
 
-# Source function library.
-. /etc/rc.d/init.d/functions
+################################################################################
+# Make required directories | user | group .
+# Globals:
+#   NGINX_SBIN_FILE
+# Arguments:
+#   None
+# Returns:
+#   None
+################################################################################
+prepare() {
 
-# Source networking configuration.
-. /etc/sysconfig/network
+    local options="$(${NGINX_SBIN_FILE} -V 2>&1 | grep 'configure arguments:')"
 
-# Check that networking is up.
-[ "${NETWORKING}" = "no" ] && exit 6
+    local nginx_user="$(echo ${options} | sed 's/[^*]*--user=\([^ ]*\).*/\1/g')"
+    local nginx_group="$(echo ${options} | sed 's/[^*]*--group=\([^ ]*\).*/\1/g')"
 
-NGINX="/usr/local/nginx/sbin/nginx"
-NGINX_CONF_FILE="/usr/local/nginx/conf/nginx.conf"
+    local group=$(grep "^${nginx_group}" /etc/group | awk -F: '{print $1}')
+    local user=$(grep "^${nginx_user}" /etc/passwd | awk -F: '{print $1}')
 
-prog=$(basename $NGINX)
-lockfile=/var/lock/subsys/nginx
-
-# make required directories
-make_dirs() {
-    NGINX_USER=`$NGINX -V 2>&1 | grep "configure arguments:" | sed 's/[^*]*--user=\([^ ]*\).*/\1/g' -`
-    if [ -z "`grep $NGINX_USER /etc/passwd`" ]; then
-        if [ -z "`grep $NGINX_USER /etc/group`" ]; then
-            /usr/sbin/groupadd $NGINX_USER
+    if [[ "${nginx_group}" != "${group}" ]]; then
+        /usr/sbin/groupadd -r "${nginx_group}"
+        if [[ "$?" -ne 0 ]]; then
+            echo "can't create a group for nginx"
+            exit 1
         fi
-        /usr/sbin/useradd -M -g $NGINX_USER -s /bin/false $NGINX_USER
     fi
-    OPTIONS=`$NGINX -V 2>&1 | grep 'configure arguments:'`
-    for OPT in $OPTIONS; do
-        if [ `echo $OPT | grep '.*-temp-path'` ]; then
-            VALUE=`echo $OPT | cut -d "=" -f 2`
-            if [ ! -d "$VALUE" ]; then
-                # echo "creating" $value
-                mkdir -p $VALUE && chown -R $NGINX_USER $VALUE
+
+    if [[ "${nginx_user}" != "${user}" ]]; then
+        /usr/sbin/useradd -r -M -g ${nginx_group} -s /sbin/nologin ${nginx_user}
+        if [[ "$?" -ne 0 ]]; then
+            echo "can't create a user for nginx"
+            exit 1
+        fi
+    fi
+
+    for option in ${options}; do
+        if [[ -n "$(echo ${option} | grep '.*-temp-path')" ]]; then
+            directory="$(echo $option | cut -d "=" -f 2)"
+            if [[ ! -d "${directory}" ]]; then
+                mkdir -p "${directory}" && chown -R "${nginx_user}" "${directory}"
             fi
         fi
     done
 }
 
+################################################################################
+# Start up nginx.
+# Globals:
+#   NGINX_SBIN_FILE
+#   NGINX_CONF_FILE
+#   NGINX_LOCK_FILE
+#   NGINX_PROG_NAME
+# Arguments:
+#   None
+# Returns:
+#   Integer
+################################################################################
 start() {
-    if [ ! -x $NGINX ]; then
+    if [[ ! -x ${NGINX_SBIN_FILE} ]]; then
         exit 1
     fi
-    if [ ! -f $NGINX_CONF_FILE ]; then
+    if [[ ! -f ${NGINX_CONF_FILE} ]]; then
         exit 6
     fi
 
-    make_dirs
-    echo -n $"Starting $prog: "
-    daemon $NGINX -c $NGINX_CONF_FILE
-    RETVAL=$?
+    prepare
+    echo -n "Starting ${NGINX_PROG_NAME}: "
+    daemon ${NGINX_SBIN_FILE} -c ${NGINX_CONF_FILE}
+    exit_code=$?
     echo
-    [ $RETVAL -eq 0 ] && touch $lockfile
-    return $RETVAL
+    if [[ ${exit_code} -eq 0 ]]; then
+        touch ${NGINX_LOCK_FILE}
+    fi
+    return ${exit_code}
 }
 
+################################################################################
+# Stop nginx.
+# Globals:
+#   NGINX_PROG_NAME
+#   NGINX_LOCK_FILE
+# Arguments:
+#   None
+# Returns:
+#   Integer
+################################################################################
 stop() {
-    echo -n $"Stopping $prog: "
+    echo -n "Stopping ${NGINX_PROG_NAME}: "
     # QUIT:graceful shutdown
-    killproc $prog -QUIT
-    RETVAL=$?
+    killproc ${NGINX_PROG_NAME} -QUIT
+    exit_code=$?
     echo
-    [ $RETVAL -eq 0 ] && rm -f $lockfile
-    return $RETVAL
+    if [[ ${exit_code} -eq 0 ]]; then
+        rm -f ${NGINX_LOCK_FILE}
+    fi
+    return ${exit_code}
 }
 
+################################################################################
+# Retart nginx.
+# Globals:
+#   None
+# Arguments:
+#   None
+# Returns:
+#   None
+################################################################################
 restart() {
     configtest || return $?
     stop
@@ -80,38 +124,102 @@ restart() {
     start
 }
 
+################################################################################
+# Reload nginx configuration file.
+# Globals:
+#   NGINX_PROG_NAME
+#   NGINX_SBIN_FILE
+# Arguments:
+#   None
+# Returns:
+#   Integer
+################################################################################
 reload() {
     configtest || return $?
-    echo -n $"Reloading $prog: "
+    echo -n "Reloading ${NGINX_PROG_NAME}: "
     # changing configuration, keeping up with a changed time zone (only for FreeBSD and Linux), 
     # starting new worker processes with a new configuration, graceful shutdown of old worker processes
-    killproc $NGINX -HUP
-    RETVAL=$?
+    killproc ${NGINX_SBIN_FILE} -HUP
+    exit_code=$?
     echo
-    return $RETVAL
+    return ${exit_code}
 }
 
+################################################################################
+# Re-opening nginx log files.
+# Globals:
+#   NGINX_SBIN_FILE
+# Arguments:
+#   None
+# Returns:
+#   Integer
+################################################################################
 reopen-logs() {
     configtest || return $?
-    echo -n $"Re-opening log files: "
+    echo -n "Re-opening ${NGINX_PROG_NAME} log files: "
     # re-opening log files
-    killproc $NGINX -USR1
-    RETVAL=$?
+    killproc ${NGINX_SBIN_FILE} -USR1
+    exit_code=$?
     echo
-    return $RETVAL
+    return ${exit_code}
 }
 
+################################################################################
+# Check the nginx configuration file.
+# Globals:
+#   NGINX_SBIN_FILE
+#   NGINX_CONF_FILE
+# Arguments:
+#   None
+# Returns:
+#   None
+################################################################################
 configtest() {
-    $NGINX -t -c $NGINX_CONF_FILE
+    ${NGINX_SBIN_FILE} -t -c ${NGINX_CONF_FILE}
 }
 
+################################################################################
+# Check the nginx status.
+# Globals:
+#   NGINX_PROG_NAME
+# Arguments:
+#   None
+# Returns:
+#   None
+################################################################################
 rh_status() {
-    status $prog
+    status ${NGINX_PROG_NAME}
 }
 
+################################################################################
+# Check the nginx status without any output.
+# Globals:
+#   None
+# Arguments:
+#   None
+# Returns:
+#   None
+################################################################################
 rh_status_q() {
     rh_status >/dev/null 2>&1
 }
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# Source networking configuration.
+. /etc/sysconfig/network
+
+# Check that networking is up.
+if [[ "${NETWORKING}" = "no" ]]; then
+    echo "Networking is not available."
+    exit 6
+fi
+
+readonly NGINX_SBIN_FILE="/usr/local/nginx/sbin/nginx"
+readonly NGINX_CONF_FILE="/usr/local/nginx/conf/nginx.conf"
+readonly NGINX_LOCK_FILE="/var/lock/subsys/nginx"
+readonly NGINX_PROG_NAME=$(basename ${NGINX_SBIN_FILE})
 
 case "$1" in
     start)
@@ -136,11 +244,8 @@ case "$1" in
     status)
         rh_status
         ;;
-    condrestart|try-restart)
-        rh_status_q || exit 0
-        ;;
     *)
-        echo $"Usage: $0 {start|stop|status|restart|condrestart|try-restart|reload|reopen-logs|configtest}"
+        echo "Usage: {start|stop|status|restart|reload|reopen-logs|configtest}"
         exit 2
 esac
 exit $?
