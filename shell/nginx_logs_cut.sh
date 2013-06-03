@@ -52,7 +52,7 @@ reopen-logs() {
     killproc ${NGINX} -USR1
     retval=$?
     echo
-    return ${readonly}
+    return ${retval}
 }
 
 rh_status() {
