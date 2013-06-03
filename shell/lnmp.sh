@@ -24,12 +24,12 @@ logger::error() {
 # Arguments:
 #   None
 # Returns:
-#   String
+#   Integer
 ################################################################################
 mysql::install() {
 
     # yum install zlib zlib-devel ncurses ncurses-devel bison
-    yum -y install zlib zlib-devel ncurses ncurses-devel bison
+    yum -y install zlib zlib-devel ncurses ncurses-devel bison 1>/dev/null
 
     # Create a mysql User and Group
     local mysql_group=$(cat /etc/group | grep '^mysql' | awk -F: '{print $1}')
@@ -82,9 +82,9 @@ mysql::install() {
                 -DENABLED_LOCAL_INFILE=1 \
                 -DENABLED_PROFILING=1 \
                 -DMYSQL_TCP_PORT=3306 \
-                -DWITH_ZLIB=system
-        make
-        make install
+                -DWITH_ZLIB=system 1>/dev/null
+        make 1>/dev/null
+        make install 1>/dev/null
     else
         logger::error "/usr/local/src/mysql-5.5.31 was not fonnd"
         exit 1
@@ -171,7 +171,7 @@ innodb_file_per_table' /etc/mysql/my.cnf
     
     /usr/local/mysql/scripts/mysql_install_db --user="${mysql_user}" \
                                               --basedir=/usr/local/mysql \
-                                              --datadir=/data/mysql
+                                              --datadir=/data/mysql 1>/dev/null
     
     #cp -f /usr/local/mysql/support-files/mysql.server /etc/rc.d/init.d/mysql
     ##vi /etc/rc.d/init.d/mysql
@@ -221,46 +221,46 @@ EOF
 # Arguments:
 #   None
 # Returns:
-#   None
+#   Integer
 ################################################################################
 php::install() {
 
     yum -y install libxml2 libjpeg freetype libpng gd curl fontconfig \
-        libxml2-devel curl-devel libjpeg-devel libpng-devel freetype-devel
+        libxml2-devel curl-devel libjpeg-devel libpng-devel freetype-devel 1>/dev/null
 
     cd /usr/local/src/re2c-0.13.5
-    ./configure
-    make
-    make install
+    ./configure 1>/dev/null
+    make 1>/dev/null
+    make install 1>/dev/null
 
     cd /usr/local/src/libiconv-1.14
-    ./configure --prefix=/usr/local/libiconv
-    make
+    ./configure --prefix=/usr/local/libiconv 1>/dev/null
+    make 1>/dev/null
     libtool --finish /usr/local/libiconv/lib
-    make install
+    make install 1>/dev/null
     
     cd /usr/local/src/libmcrypt-2.5.8
-    ./configure --prefix=/usr/local/libmcrypt
-    make
-    make install
+    ./configure --prefix=/usr/local/libmcrypt 1>/dev/null
+    make 1>/dev/null
+    make install 1>/dev/null
     
     cd /usr/local/src/libmcrypt-2.5.8/libltdl
-    ./configure --enable-ltdl-install
-    make
-    make install
+    ./configure --enable-ltdl-install 1>/dev/null
+    make 1>/dev/null
+    make install 1>/dev/null
     
     cd /usr/local/src/mhash-0.9.9.9
-    ./configure --prefix=/usr/local/mhash
-    make
-    make install
+    ./configure --prefix=/usr/local/mhash 1>/dev/null
+    make 1>/dev/null
+    make install 1>/dev/null
     
     cd /usr/local/src/mcrypt-2.6.8
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/libmcrypt/lib:/usr/local/mhash/lib
     export LDFLAGS="-L/usr/local/mhash/lib/ -I/usr/local/mhash/include/"
     export CFLAGS="-I/usr/local/mhash/include/"
-    ./configure --prefix=/usr/local/mcrypt --with-libmcrypt-prefix=/usr/local/libmcrypt
-    make
-    make install
+    ./configure --prefix=/usr/local/mcrypt --with-libmcrypt-prefix=/usr/local/libmcrypt 1>/dev/null
+    make 1>/dev/null
+    make install 1>/dev/null
 
     # Create a PHP User and Group
     local php_group=$(cat /etc/group | grep '^www' | awk -F: '{print $1}')
@@ -317,9 +317,9 @@ php::install() {
                 --with-libxml-dir \
                 --with-mcrypt=/usr/local/libmcrypt/ \
                 --with-mhash=/usr/local/mhash/ \
-                --disable-ipv6
-    make
-    make install
+                --disable-ipv6 1>/dev/null
+    make 1>/dev/null
+    make install 1>/dev/null
     
     cp -f /usr/local/src/php-5.4.15/php.ini-production /usr/local/php/etc/php.ini
     rm -rf /etc/php.ini
@@ -352,24 +352,24 @@ php::install() {
     local memory_free="$(free -m | grep Mem | awk '{print $4}')"
 
     # max php-fpm processors
-    local php_fpm_max_processor="$(expr $memory_free / 30)"
+    local php_fpm_max_processor="$(expr ${memory_free} / 30)"
 
     # max php-fpm pm children
-    local pm_max_children="$(expr $cpu_core_number \* 2)"
+    local pm_max_children="$(expr ${cpu_core_number} \* 2)"
 
-    if [[ "$php_fpm_max_processor" -ge "$pm_max_children" ]]; then
+    if [[ "${php_fpm_max_processor}" -ge "${pm_max_children}" ]]; then
         sed -i 's/^pm = dynamic$/pm = static/' /usr/local/php/etc/php-fpm.conf
-        sed -i "s/^pm.max_children = 5\$/pm.max_children = $pm_max_children/" /usr/local/php/etc/php-fpm.conf
-        sed -i "s/^pm.start_servers = 2\$/pm.start_servers = $pm_max_children/" /usr/local/php/etc/php-fpm.conf
+        sed -i "s/^pm.max_children = 5\$/pm.max_children = ${pm_max_children}/" /usr/local/php/etc/php-fpm.conf
+        sed -i "s/^pm.start_servers = 2\$/pm.start_servers = ${pm_max_children}/" /usr/local/php/etc/php-fpm.conf
         sed -i 's/^pm.min_spare_servers = 1$/pm.min_spare_servers = 0/' /usr/local/php/etc/php-fpm.conf
-        sed -i "s/^pm.max_spare_servers = 3\$/pm.max_spare_servers = $pm_max_children/" /usr/local/php/etc/php-fpm.conf
+        sed -i "s/^pm.max_spare_servers = 3\$/pm.max_spare_servers = ${pm_max_children}/" /usr/local/php/etc/php-fpm.conf
         sed -i 's/^;pm.max_requests = 500$/pm.max_requests = 5000/' /usr/local/php/etc/php-fpm.conf
     else
         #sed -i 's/^pm = dynamic$/pm = static/' /usr/local/php/etc/php-fpm.conf
-        sed -i "s/^pm.max_children = 5\$/pm.max_children = $pm_max_children/" /usr/local/php/etc/php-fpm.conf
-        sed -i "s/^pm.start_servers = 2\$/pm.start_servers = $cpu_core_number/" /usr/local/php/etc/php-fpm.conf
+        sed -i "s/^pm.max_children = 5\$/pm.max_children = ${pm_max_children}/" /usr/local/php/etc/php-fpm.conf
+        sed -i "s/^pm.start_servers = 2\$/pm.start_servers = ${cpu_core_number}/" /usr/local/php/etc/php-fpm.conf
         sed -i 's/^pm.min_spare_servers = 1$/pm.min_spare_servers = 2/' /usr/local/php/etc/php-fpm.conf
-        sed -i "s/^pm.max_spare_servers = 3\$/pm.max_spare_servers = $cpu_core_number/" /usr/local/php/etc/php-fpm.conf
+        sed -i "s/^pm.max_spare_servers = 3\$/pm.max_spare_servers = ${cpu_core_number}/" /usr/local/php/etc/php-fpm.conf
         sed -i 's/^;pm.max_requests = 500$/pm.max_requests = 5000/' /usr/local/php/etc/php-fpm.conf
     fi
 
@@ -443,7 +443,7 @@ php::install() {
 # Arguments:
 #   None
 # Returns:
-#   None
+#   Integer
 ################################################################################
 nginx::install() {
 
@@ -477,9 +477,9 @@ nginx::install() {
                 --enable-pcre16 \
                 --enable-pcre32 \
                 --enable-jit \
-                --enable-unicode-properties
-    make
-    make install
+                --enable-unicode-properties 1>/dev/null
+    make 1>/dev/null
+    make install 1>/dev/null
     
     cd /usr/local/src/nginx-1.4.1
     
@@ -508,7 +508,8 @@ nginx::install() {
     local memory_free="$(free -m | grep Mem | awk '{print $4}')"
 
     #vi /usr/local/nginx/conf/nginx.conf
-    sed -i 's/^#user.*nobody;$/user  ${nginx_user}  ${nginx_group};/' /usr/local/nginx/conf/nginx.conf
+    #TODO
+    sed -i "s/^#user.*nobody;\$/user  ${nginx_user}  ${nginx_group};/" /usr/local/nginx/conf/nginx.conf
     sed -i "s/^worker_processes.*1;\$/worker_processes  ${cpu_core_number};/" /usr/local/nginx/conf/nginx.conf
     sed -i 's/^#pid/pid/' /usr/local/nginx/conf/nginx.conf
     sed -i 's*^#error_log  logs/error.log  notice;*error_log  logs/error.log  notice;*' /usr/local/nginx/conf/nginx.conf
@@ -519,7 +520,7 @@ nginx::install() {
 
     for ((loop=0;loop<cpu_core_number;loop++))
     do
-        cpumask_unformatted=`echo "obase=2;$[ 2 ** ${loop} ]" | bc`
+        cpumask_unformatted=$(echo "obase=2;$[ 2 ** ${loop} ]" | bc)
         cpumask=$(printf " %0${cpu_core_number}d" ${cpumask_unformatted})
         worker_cpu_affinity=${worker_cpu_affinity}${CPUMASK}
     done
@@ -1022,7 +1023,15 @@ EOF
     return $?
 }
 
-# install xdebug 2.2.2
+################################################################################
+# Install xdebug-2.2.3
+# Globals:
+#   None
+# Arguments:
+#   None
+# Returns:
+#   None
+################################################################################
 xdebug::install() {
 
     cd /usr/local/src/
@@ -1051,7 +1060,15 @@ xdebug.auto_profile=1\
     return $?
 }
 
-# install xdebug 2.2.2
+################################################################################
+# Install xtrabackup-2.1.3
+# Globals:
+#   None
+# Arguments:
+#   None
+# Returns:
+#   None
+################################################################################
 xtrabackup::install() {
 
     yum -y install cmake gcc gcc-c++ patch libaio libaio-devel automake \
@@ -1104,6 +1121,24 @@ EOF
 #   None
 ################################################################################
 main(){
+
+    clear
+
+    echo "┌───────────────────────────────────────────────────────────────────┐"
+    echo "│        #####      #####       ##   #####      ###     ########    │"
+    echo "│       ##  ##     ## ###      ##   ## ####    ####    ##  ##   #   │"
+    echo "│      ###  ##    ##  ####    ##   ##  ####    ###    ##  ###   #   │"
+    echo "│      ##         ##  ####    ##   ##  ####   ####   ###  ###   #   │"
+    echo "│      ##        ##   #####  ###  ##   ####  #####   ##   ###  ##   │"
+    echo "│     ###             ## ### ##        ##### #####        ### ##    │"
+    echo "│     ###            ### ### ##       ######## ###       ######     │"
+    echo "│     ###            ##   #####       ## ####  ##        ###        │"
+    echo "│     ##             ##   #####       ##  ###  ##        ###        │"
+    echo "│    ###            ##     ####      ##   ##  ###        ##         │"
+    echo "│    ##     ## ###  ##      ##  ###  ##       ###       ##          │"
+    echo "│  ##########   #####       ##   #####        #####   ######        │"
+    echo "└───────────────────────────────────────────────────────────────────┘"
+    echo ""
 
     # 01 nginx-1.4.1.tar.gz
     # 02 openssl-1.0.1e.tar.gz
@@ -1197,7 +1232,7 @@ main(){
 
     cd /etc/yum.repos.d
 
-    for repo in "$(ls | grep -i '.repo$')"; do
+    for repo in $(ls | grep -i '.repo$'); do
         if [[ -n "${repo}" ]]; then
             mv "${repo}" "${repo}_licunchang.bak"
         fi
