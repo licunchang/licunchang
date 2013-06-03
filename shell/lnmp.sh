@@ -29,7 +29,7 @@ logger::error() {
 mysql::install() {
 
     # yum install zlib zlib-devel ncurses ncurses-devel bison
-    yum -y install zlib zlib-devel ncurses ncurses-devel bison 1>/dev/null
+    yum -y install zlib zlib-devel ncurses ncurses-devel bison
 
     # Create a mysql User and Group
     local mysql_group=$(cat /etc/group | grep '^mysql' | awk -F: '{print $1}')
@@ -82,9 +82,9 @@ mysql::install() {
                 -DENABLED_LOCAL_INFILE=1 \
                 -DENABLED_PROFILING=1 \
                 -DMYSQL_TCP_PORT=3306 \
-                -DWITH_ZLIB=system 1>/dev/null
-        make 1>/dev/null
-        make install 1>/dev/null
+                -DWITH_ZLIB=system
+        make
+        make install
     else
         logger::error "/usr/local/src/mysql-5.5.31 was not fonnd"
         exit 1
@@ -171,7 +171,7 @@ innodb_file_per_table' /etc/mysql/my.cnf
     
     /usr/local/mysql/scripts/mysql_install_db --user="${mysql_user}" \
                                               --basedir=/usr/local/mysql \
-                                              --datadir=/data/mysql 1>/dev/null
+                                              --datadir=/data/mysql
     
     #cp -f /usr/local/mysql/support-files/mysql.server /etc/rc.d/init.d/mysql
     ##vi /etc/rc.d/init.d/mysql
@@ -226,41 +226,41 @@ EOF
 php::install() {
 
     yum -y install libxml2 libjpeg freetype libpng gd curl fontconfig \
-        libxml2-devel curl-devel libjpeg-devel libpng-devel freetype-devel 1>/dev/null
+        libxml2-devel curl-devel libjpeg-devel libpng-devel freetype-devel
 
     cd /usr/local/src/re2c-0.13.5
-    ./configure 1>/dev/null
-    make 1>/dev/null
-    make install 1>/dev/null
+    ./configure
+    make
+    make install
 
     cd /usr/local/src/libiconv-1.14
-    ./configure --prefix=/usr/local/libiconv 1>/dev/null
-    make 1>/dev/null
+    ./configure --prefix=/usr/local/libiconv
+    make
     libtool --finish /usr/local/libiconv/lib
-    make install 1>/dev/null
+    make install
     
     cd /usr/local/src/libmcrypt-2.5.8
-    ./configure --prefix=/usr/local/libmcrypt 1>/dev/null
-    make 1>/dev/null
-    make install 1>/dev/null
+    ./configure --prefix=/usr/local/libmcrypt
+    make
+    make install
     
     cd /usr/local/src/libmcrypt-2.5.8/libltdl
-    ./configure --enable-ltdl-install 1>/dev/null
-    make 1>/dev/null
-    make install 1>/dev/null
+    ./configure --enable-ltdl-install
+    make
+    make install
     
     cd /usr/local/src/mhash-0.9.9.9
-    ./configure --prefix=/usr/local/mhash 1>/dev/null
-    make 1>/dev/null
-    make install 1>/dev/null
+    ./configure --prefix=/usr/local/mhash
+    make
+    make install
     
     cd /usr/local/src/mcrypt-2.6.8
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/libmcrypt/lib:/usr/local/mhash/lib
     export LDFLAGS="-L/usr/local/mhash/lib/ -I/usr/local/mhash/include/"
     export CFLAGS="-I/usr/local/mhash/include/"
-    ./configure --prefix=/usr/local/mcrypt --with-libmcrypt-prefix=/usr/local/libmcrypt 1>/dev/null
-    make 1>/dev/null
-    make install 1>/dev/null
+    ./configure --prefix=/usr/local/mcrypt --with-libmcrypt-prefix=/usr/local/libmcrypt
+    make
+    make install
 
     # Create a PHP User and Group
     local php_group=$(cat /etc/group | grep '^www' | awk -F: '{print $1}')
@@ -317,9 +317,9 @@ php::install() {
                 --with-libxml-dir \
                 --with-mcrypt=/usr/local/libmcrypt/ \
                 --with-mhash=/usr/local/mhash/ \
-                --disable-ipv6 1>/dev/null
-    make 1>/dev/null
-    make install 1>/dev/null
+                --disable-ipv6
+    make
+    make install
     
     cp -f /usr/local/src/php-5.4.15/php.ini-production /usr/local/php/etc/php.ini
     rm -rf /etc/php.ini
@@ -477,9 +477,9 @@ nginx::install() {
                 --enable-pcre16 \
                 --enable-pcre32 \
                 --enable-jit \
-                --enable-unicode-properties 1>/dev/null
-    make 1>/dev/null
-    make install 1>/dev/null
+                --enable-unicode-properties
+    make
+    make install
     
     cd /usr/local/src/nginx-1.4.1
     
@@ -522,7 +522,7 @@ nginx::install() {
     do
         cpumask_unformatted=$(echo "obase=2;$[ 2 ** ${loop} ]" | bc)
         cpumask=$(printf " %0${cpu_core_number}d" ${cpumask_unformatted})
-        worker_cpu_affinity=${worker_cpu_affinity}${CPUMASK}
+        worker_cpu_affinity=${worker_cpu_affinity}${cpumask}
     done
     worker_cpu_affinity=${worker_cpu_affinity}';'
 
