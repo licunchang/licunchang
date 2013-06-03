@@ -14,7 +14,7 @@ if [[ ! -d "${LOGS_BACKUP}" ]]; then
     mkdir -p "${LOGS_BACKUP}"
 fi
 
-APP_NUM=${#APP_NAME[@]}
+readonly APP_NUM=${#APP_NAME[@]}
 
 for ((i=0; i<"${APP_NUM}"; i++)); do
     if [[ -f ${LOGS_PATH}${APP_NAME[i]}.access.log ]]; then
@@ -50,9 +50,9 @@ reopen-logs() {
     # changing configuration, keeping up with a changed time zone (only for FreeBSD and Linux), 
     # starting new worker processes with a new configuration, graceful shutdown of old worker processes
     killproc ${NGINX} -USR1
-    RETVAL=$?
+    retval=$?
     echo
-    return ${RETVAL}
+    return ${readonly}
 }
 
 rh_status() {
@@ -71,5 +71,5 @@ rh_status_q && reopen-logs
 cd ${LOGS_BACKUP}
 cd ..
 
-LOGS_LIFETIME_MONTHS=12
+readonly LOGS_LIFETIME_MONTHS=12
 find . -mtime +$((${LOGS_LIFETIME_MONTHS}*30)) -exec rm -rf {} \;
