@@ -15,6 +15,7 @@
 ################################################################################
 logger::error() {
     echo "[error:$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2
+    exit 1
 }
 
 ################################################################################
@@ -40,7 +41,7 @@ logger::info() {
 #   None
 ################################################################################
 trap::error() {
-    echo "[LINE:$1] Error: Command or function exited with status $?"
+    logger::error "[LINE:$1] Error: Command or function exited with status $?"
 }
 
 ################################################################################
@@ -48,14 +49,14 @@ trap::error() {
 # Globals:
 #   None
 # Arguments:
-#   None
+#   Integer
 # Returns:
 #   None
 ################################################################################
 trap::interrupt() {
-    echo
-    echo "Aborting!"
-    echo
+    logger::info ""
+    logger::info "Aborting at [LINE:$1]!"
+    logger::info ""
     exit 1
 }
 
@@ -70,7 +71,7 @@ trap::interrupt() {
 ################################################################################
 mysql::install() {
 
-    logger::info "yum -y install zlib zlib-devel ncurses ncurses-devel bison"
+    logger::info "install zlib zlib-devel ncurses ncurses-devel bison"
     # yum install zlib zlib-devel ncurses ncurses-devel bison
     yum -y install zlib zlib-devel ncurses ncurses-devel bison
 
@@ -79,6 +80,7 @@ mysql::install() {
     local mysql_user=$(grep '^mysql' /etc/passwd | awk -F: '{print $1}')
 
     if [[ "${mysql_group}" != "mysql" ]]; then
+        logger::info "create group:mysql"
         /usr/sbin/groupadd -r mysql
         if [[ "$?" -ne 0 ]]; then
             logger::error "can't create a group for mysql"
@@ -89,6 +91,7 @@ mysql::install() {
     fi
 
     if [[ "${mysql_user}" != "mysql" ]]; then
+        logger::info "create user:mysql"
         /usr/sbin/useradd -g mysql -M -r -s /sbin/nologin mysql
         if [[ "$?" -ne 0 ]]; then
             logger::error "can't create a user for mysql"
@@ -99,6 +102,7 @@ mysql::install() {
     fi
 
     # Create the mysql data directory: /data/mysql
+    logger::info "create mysql data directory"
     mkdir -p /data/mysql
     chown -R mysql:mysql /data/mysql
 
@@ -107,6 +111,7 @@ mysql::install() {
     chown -R mysql:mysql /etc/mysql
 
     if [[ -d "/usr/local/src/mysql-5.5.31" ]]; then
+        logger::info "install mysql from source"
         cd /usr/local/src/mysql-5.5.31
         cmake . -DCMAKE_INSTALL_PREFIX=/usr/local/mysql \
                 -DMYSQL_DATADIR=/data/mysql \
@@ -133,6 +138,7 @@ mysql::install() {
         exit 1
     fi
 
+    logger::info "create the config file"
     # Create the config file
     rm -f /etc/my.cnf
     
@@ -159,6 +165,7 @@ mysql::install() {
               /etc/mysql/my.cnf
     fi
     
+    logger::info "optimize mysql"
     #vi /etc/mysql/my.cnf
     #[client]
     #default-character-set=utf8
@@ -212,6 +219,7 @@ innodb_file_per_table' /etc/mysql/my.cnf
     sed -i 's/^#innodb_flush_log_at_trx_commit/innodb_flush_log_at_trx_commit/' /etc/mysql/my.cnf
     sed -i 's/^#innodb_lock_wait_timeout/innodb_lock_wait_timeout/' /etc/mysql/my.cnf
     
+    logger::info "install mysql db"
     /usr/local/mysql/scripts/mysql_install_db --user="${mysql_user}" \
                                               --basedir=/usr/local/mysql \
                                               --datadir=/data/mysql
@@ -227,14 +235,17 @@ innodb_file_per_table' /etc/mysql/my.cnf
     #chkconfig --level 35 mysql on
     #service mysql start
     
+    logger::info "create mysql init script"
     mkdir -p /data/init.d/
     cp -f /usr/local/mysql/support-files/mysql.server /data/init.d/mysql
     sed -i 's#^basedir=$#basedir=/usr/local/mysql#' /data/init.d/mysql
     sed -i 's#^datadir=$#datadir=/data/mysql#' /data/init.d/mysql
     chmod 755 /data/init.d/mysql
 
+    logger::info "start mysql"
     /data/init.d/mysql start
     
+    logger::info "mysql secure"
     # TODO
     cd /usr/local/mysql/
     /usr/local/mysql/bin/mysql_secure_installation <<EOF
@@ -248,12 +259,14 @@ y
 y
 EOF
     
+    logger::info "iptables [port:3306]"
     #vi /etc/sysconfig/iptables
     sed -i '/^-A INPUT -i lo -j ACCEPT$/a\
 -A INPUT -m state --state NEW -m tcp -p tcp --dport 3306 -j ACCEPT' /etc/sysconfig/iptables
     
     service iptables restart
     
+    logger::info "[done]mysql::install"
     return "$?"
 }
 
@@ -268,35 +281,43 @@ EOF
 ################################################################################
 php::install() {
 
+    logger::info "install libxml2 libjpeg freetype libpng gd curl fontconfig \
+        libxml2-devel curl-devel libjpeg-devel libpng-devel freetype-devel"
     yum -y install libxml2 libjpeg freetype libpng gd curl fontconfig \
         libxml2-devel curl-devel libjpeg-devel libpng-devel freetype-devel
 
+    logger::info "re2c install"
     cd /usr/local/src/re2c-0.13.5
     ./configure
     make
     make install
 
+    logger::info "libiconv install"
     cd /usr/local/src/libiconv-1.14
     ./configure --prefix=/usr/local/libiconv
     make
     libtool --finish /usr/local/libiconv/lib
     make install
     
+    logger::info "libmcrypt install"
     cd /usr/local/src/libmcrypt-2.5.8
     ./configure --prefix=/usr/local/libmcrypt
     make
     make install
-    
+
+    logger::info "libmcrypt libltdl install"
     cd /usr/local/src/libmcrypt-2.5.8/libltdl
     ./configure --enable-ltdl-install
     make
     make install
     
+    logger::info "mhash install"
     cd /usr/local/src/mhash-0.9.9.9
     ./configure --prefix=/usr/local/mhash
     make
     make install
     
+    logger::info "mcrypt install"
     cd /usr/local/src/mcrypt-2.6.8
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/libmcrypt/lib:/usr/local/mhash/lib
     export LDFLAGS="-L/usr/local/mhash/lib/ -I/usr/local/mhash/include/"
@@ -306,10 +327,11 @@ php::install() {
     make install
 
     # Create a PHP User and Group
-    local php_group=$(cat /etc/group | grep '^www' | awk -F: '{print $1}')
-    local php_user=$(cat /etc/passwd | grep '^www' | awk -F: '{print $1}')
+    local php_group=$(grep '^www' /etc/group | awk -F: '{print $1}')
+    local php_user=$(grep '^www' /etc/passwd | awk -F: '{print $1}')
 
     if [[ "${php_group}" != "www" ]]; then
+        logger::info "create group:www"
         /usr/sbin/groupadd -r www
         if [[ "$?" -ne 0 ]]; then
             logger::error "can't create a group for php-fpm"
@@ -320,6 +342,7 @@ php::install() {
     fi
 
     if [[ "${php_user}" != "www" ]]; then
+        logger::info "create user:www"
         /usr/sbin/useradd -g www -M -r -s /sbin/nologin www
         if [[ "$?" -ne 0 ]]; then
             logger::error "can't create a user for php-fpm"
@@ -329,46 +352,53 @@ php::install() {
         fi
     fi
 
-    cd /usr/local/src/php-5.4.15
-    ./configure --prefix=/usr/local/php \
-                --with-config-file-path=/usr/local/php/etc \
-                --enable-bcmath \
-                --enable-shmop \
-                --enable-sysvsem \
-                --enable-ftp \
-                --with-curl \
-                --with-curlwrappers \
-                --with-png-dir \
-                --with-jpeg-dir \
-                --with-freetype-dir \
-                --with-gd \
-                --enable-gd-native-ttf \
-                --enable-mbstring \
-                --enable-soap \
-                --enable-sockets \
-                --enable-zip \
-                --with-xmlrpc \
-                --with-mysql=/usr/local/mysql \
-                --with-mysqli=/usr/local/mysql/bin/mysql_config \
-                --with-pdo-mysql=/usr/local/mysql/ \
-                --enable-fpm \
-                --with-fpm-user="${php_user}" \
-                --with-fpm-group="${php_group}" \
-                --with-zlib \
-                --with-iconv-dir=/usr/local/libiconv/ \
-                --with-pcre-dir=/usr/local/pcre \
-                --with-libxml-dir \
-                --with-mcrypt=/usr/local/libmcrypt/ \
-                --with-mhash=/usr/local/mhash/ \
-                --disable-ipv6
-    make
-    make install
+    if [[ -d "/usr/local/src/php-5.4.15" ]]; then
+        logger::info "install php from source"
+        cd /usr/local/src/php-5.4.15
+        ./configure --prefix=/usr/local/php \
+                    --with-config-file-path=/usr/local/php/etc \
+                    --enable-bcmath \
+                    --enable-shmop \
+                    --enable-sysvsem \
+                    --enable-ftp \
+                    --with-curl \
+                    --with-curlwrappers \
+                    --with-png-dir \
+                    --with-jpeg-dir \
+                    --with-freetype-dir \
+                    --with-gd \
+                    --enable-gd-native-ttf \
+                    --enable-mbstring \
+                    --enable-soap \
+                    --enable-sockets \
+                    --enable-zip \
+                    --with-xmlrpc \
+                    --with-mysql=/usr/local/mysql \
+                    --with-mysqli=/usr/local/mysql/bin/mysql_config \
+                    --with-pdo-mysql=/usr/local/mysql/ \
+                    --enable-fpm \
+                    --with-fpm-user="${php_user}" \
+                    --with-fpm-group="${php_group}" \
+                    --with-zlib \
+                    --with-iconv-dir=/usr/local/libiconv/ \
+                    --with-pcre-dir=/usr/local/pcre \
+                    --with-libxml-dir \
+                    --with-mcrypt=/usr/local/libmcrypt/ \
+                    --with-mhash=/usr/local/mhash/ \
+                    --disable-ipv6
+        make
+        make install
+    else
+        logger::error "/usr/local/src/php-5.4.15 was not fonnd"
+        exit 1
+    fi
     
+    logger::info "create /etc/php.ini"
     cp -f /usr/local/src/php-5.4.15/php.ini-production /usr/local/php/etc/php.ini
     rm -rf /etc/php.ini
 
     # vi /usr/local/php/etc/php.ini
-
+    logger::info "optimize php"
     sed -i 's#^;date.timezone =#date.timezone = Asia/Shanghai#' /usr/local/php/etc/php.ini
     sed -i 's#^expose_php = On#expose_php = Off#' /usr/local/php/etc/php.ini
     sed -i 's#^session.name = PHPSESSID#session.name = JSESSIONID#' /usr/local/php/etc/php.ini
@@ -470,12 +500,15 @@ php::install() {
     # Note: Mandatory when pm is set to 'dynamic'
     # pm.max_spare_servers = 3
 
+    logger::info "create php init script"
     cp -f /usr/local/src/php-5.4.15/sapi/fpm/init.d.php-fpm /data/init.d/php-fpm
     
     chmod 755 /data/init.d/php-fpm
-
+    
+    logger::info "start php-fpm"
     /data/init.d/php-fpm start
     
+    logger::info "[done]php::install"
     return "$?"
 }
 
@@ -491,10 +524,11 @@ php::install() {
 nginx::install() {
 
     # Create a Nginx User and Group
-    local nginx_group=$(cat /etc/group | grep '^www' | awk -F: '{print $1}')
-    local nginx_user=$(cat /etc/passwd | grep '^www' | awk -F: '{print $1}')
+    local nginx_group=$(grep '^www' /etc/group | awk -F: '{print $1}')
+    local nginx_user=$(grep '^www' /etc/passwd | awk -F: '{print $1}')
 
     if [[ "${nginx_group}" != "www" ]]; then
+        logger::info "create group:www"
         /usr/sbin/groupadd -r www
         if [[ "$?" -ne 0 ]]; then
             logger::error "can't create a group for nginx"
@@ -505,6 +539,7 @@ nginx::install() {
     fi
 
     if [[ "${nginx_user}" != "www" ]]; then
+        logger::info "create user:www"
         /usr/sbin/useradd -g www -M -r -s /sbin/nologin www
         if [[ "$?" -ne 0 ]]; then
             logger::error "can't create a user for nginx"
@@ -514,35 +549,49 @@ nginx::install() {
         fi
     fi
     
-    cd /usr/local/src/pcre-8.32
-    ./configure --prefix=/usr/local/pcre \
-                --enable-utf \
-                --enable-pcre16 \
-                --enable-pcre32 \
-                --enable-jit \
-                --enable-unicode-properties
-    make
-    make install
+    if [[ -d "/usr/local/src/pcre-8.32" ]]; then
+        logger::info "install pcre from source"
+        cd /usr/local/src/pcre-8.32
+        ./configure --prefix=/usr/local/pcre \
+                    --enable-utf \
+                    --enable-pcre16 \
+                    --enable-pcre32 \
+                    --enable-jit \
+                    --enable-unicode-properties
+        make
+        make install
+    else
+        logger::error "/usr/local/src/pcre-8.32 was not fonnd"
+        exit 1
+    fi
     
-    cd /usr/local/src/nginx-1.4.1
-    
-    sed -i 's/nginx\b/Microsoft-IIS/g' ./src/core/nginx.h
-    sed -i 's/1.4.1/7.5/' ./src/core/nginx.h
-    sed -i 's/Server: nginx/Server: Microsoft-IIS/' ./src/http/ngx_http_header_filter_module.c
-    sed -i 's/>nginx</>Microsoft-IIS</' ./src/http/ngx_http_special_response.c
-    
-    ./configure --with-http_stub_status_module \
-                --with-http_gzip_static_module \
-                --with-http_ssl_module \
-                --with-openssl=/usr/local/src/openssl-1.0.1e \
-                --user="${nginx_user}" \
-                --group="${nginx_group}" \
-                --prefix=/usr/local/nginx \
-                --with-pcre=/usr/local/src/pcre-8.32 \
-                --with-http_realip_module \
-                --with-cpu-opt=amd64
-    make
-    make install
+    if [[ -d "/usr/local/src/nginx-1.4.1" ]]; then
+        logger::info "install nginx from source"
+        cd /usr/local/src/nginx-1.4.1
+        
+        sed -i 's/nginx\b/Microsoft-IIS/g' ./src/core/nginx.h
+        sed -i 's/1.4.1/7.5/' ./src/core/nginx.h
+        sed -i 's/Server: nginx/Server: Microsoft-IIS/' ./src/http/ngx_http_header_filter_module.c
+        sed -i 's/>nginx</>Microsoft-IIS</' ./src/http/ngx_http_special_response.c
+        
+        ./configure --with-http_stub_status_module \
+                    --with-http_gzip_static_module \
+                    --with-http_ssl_module \
+                    --with-openssl=/usr/local/src/openssl-1.0.1e \
+                    --user="${nginx_user}" \
+                    --group="${nginx_group}" \
+                    --prefix=/usr/local/nginx \
+                    --with-pcre=/usr/local/src/pcre-8.32 \
+                    --with-http_realip_module \
+                    --with-cpu-opt=amd64
+        make
+        make install
+    else
+        logger::error "/usr/local/src/nginx-1.4.1 was not fonnd"
+        exit 1
+    fi
+
+    logger::info "optimize nginx config"
 
     # CPU core number
     local cpu_core_number="$(more /proc/cpuinfo | grep "model name" | wc -l)"
@@ -630,6 +679,7 @@ http {
 }
 EOF
 
+    logger::info "add server[www.licunchang.com] nginx config"
     mkdir -p /usr/local/nginx/conf/servers/
     
     cat > /usr/local/nginx/conf/servers/www.licunchang.com.conf <<'EOF'
@@ -681,6 +731,7 @@ server {
 }
 EOF
 
+    logger::info "add server[mysql.licunchang.com] nginx config"
     cat > /usr/local/nginx/conf/servers/mysql.licunchang.com.conf <<'EOF'
 server {
     listen       80;
@@ -731,7 +782,8 @@ server {
 }
 EOF
 
-cat > /usr/local/nginx/conf/servers/status.licunchang.com.conf <<'EOF'
+    logger::info "add server[status.licunchang.com] nginx config"
+    cat > /usr/local/nginx/conf/servers/status.licunchang.com.conf <<'EOF'
 server {
     listen  80;
     server_name  status.licunchang.com;
@@ -788,6 +840,7 @@ EOF
     chown www.www /data/web/mysql.licunchang.com  -R
     chmod 744 /data/web/mysql.licunchang.com  -R
 
+    logger::info "add nginx init script"
     cat > /data/init.d/nginx <<'EOF'
 #!/bin/bash
 #
@@ -1042,9 +1095,11 @@ esac
 exit $?
 EOF
 
+    logger::info "start nginx"
     chmod 755 /data/init.d/nginx
     /data/init.d/nginx start
     
+    logger::info "iptables:80"
     sed -i '/^-A INPUT -i lo -j ACCEPT$/a\
 -A INPUT -m state --state NEW -m tcp -p tcp --dport 80 -j ACCEPT' /etc/sysconfig/iptables
     
@@ -1082,6 +1137,7 @@ EOF
         # deny all;
     # }
     
+    logger::info "crontab:nginx_logs_cut"
     mkdir -p /data/logs/nginx/
     mkdir -p /data/cron/
     cat > /data/cron/nginx_logs_cut.sh <<'EOF'
@@ -1264,29 +1320,27 @@ EOF
 ################################################################################
 main() {
 
-    1>/dev/null
-
+    INSTALL_LOG="${HOME}/install_lnmp.log"
+    exec 1>${INSTALL_LOG}
     export PS4='+$LINENO:{${FUNCNAME[0]}} '
-    trap "trap::interrupt" 1 2 3 6 15
+    trap 'trap::interrupt $LINENO' 1 2 3 6 15
     trap 'trap::error $LINENO' ERR
 
-    clear
-
-    echo "┌───────────────────────────────────────────────────────────────────┐"
-    echo "│        #####      #####       ##   #####      ###     ########    │"
-    echo "│       ##  ##     ## ###      ##   ## ####    ####    ##  ##   #   │"
-    echo "│      ###  ##    ##  ####    ##   ##  ####    ###    ##  ###   #   │"
-    echo "│      ##         ##  ####    ##   ##  ####   ####   ###  ###   #   │"
-    echo "│      ##        ##   #####  ###  ##   ####  #####   ##   ###  ##   │"
-    echo "│     ###             ## ### ##        ##### #####        ### ##    │"
-    echo "│     ###            ### ### ##       ######## ###       ######     │"
-    echo "│     ###            ##   #####       ## ####  ##        ###        │"
-    echo "│     ##             ##   #####       ##  ###  ##        ###        │"
-    echo "│    ###            ##     ####      ##   ##  ###        ##         │"
-    echo "│    ##     ## ###  ##      ##  ###  ##       ###       ##          │"
-    echo "│  ##########   #####       ##   #####        #####   ######        │"
-    echo "└───────────────────────────────────────────────────────────────────┘"
-    echo ""
+    logger::info "┌─────────────────────────────────────────────────────────────────┐"
+    logger::info "│       #####      #####       ##   #####      ###     ########   │"
+    logger::info "│      ##  ##     ## ###      ##   ## ####    ####    ##  ##   #  │"
+    logger::info "│     ###  ##    ##  ####    ##   ##  ####    ###    ##  ###   #  │"
+    logger::info "│     ##         ##  ####    ##   ##  ####   ####   ###  ###   #  │"
+    logger::info "│     ##        ##   #####  ###  ##   ####  #####   ##   ###  ##  │"
+    logger::info "│    ###             ## ### ##        ##### #####        ### ##   │"
+    logger::info "│    ###            ### ### ##       ######## ###       ######    │"
+    logger::info "│    ###            ##   #####       ## ####  ##        ###       │"
+    logger::info "│    ##             ##   #####       ##  ###  ##        ###       │"
+    logger::info "│   ###            ##     ####      ##   ##  ###        ##        │"
+    logger::info "│   ##     ## ###  ##      ##  ###  ##       ###       ##         │"
+    logger::info "│ ##########   #####       ##   #####        #####   ######       │"
+    logger::info "└─────────────────────────────────────────────────────────────────┘"
+    logger::info ""
 
     # 01 nginx-1.4.1.tar.gz
     # 02 openssl-1.0.1e.tar.gz
@@ -1330,6 +1384,7 @@ main() {
     cd /usr/local/src
     for package in ${PACKAGES[@]}; do
         if [[ -f "${package}" ]]; then
+            logger::info "unzip ${package}"
             tar zxf "${package}"
         else
             logger::error "/usr/local/src/${package} was not found."
@@ -1360,6 +1415,8 @@ main() {
     if [[ "${NETWORKING}" == "no" ]]; then
         logger::error "network is not available."
         exit 1
+    else
+        logger::info "network is working."
     fi
 
     readonly CDROM_MOUNT_DIR="/mnt/cdrom"
@@ -1371,6 +1428,7 @@ main() {
     fi
 
     if [[ -z "$(ls -A "${CDROM_MOUNT_DIR}")" ]]; then
+        logger::info "mount cdrom."
         mount /dev/cdrom "${CDROM_MOUNT_DIR}"
         if [[ "$?" -ne 0 ]]; then
             logger::error "can't create a directory as a mount point"
@@ -1379,13 +1437,14 @@ main() {
     fi
 
     cd /etc/yum.repos.d
-
+    logger::info "backup yum sources"
     for repo in $(ls | grep -i '.repo$'); do
         if [[ -n "${repo}" ]]; then
             mv "${repo}" "${repo}_licunchang.bak"
         fi
     done
 
+    logger::info "create dvd yum sources"
     touch CentOS-Dvd.repo
 
     cat > CentOS-Dvd.repo <<'EOF'
@@ -1398,30 +1457,36 @@ EOF
 
     yum makecache
 
+    logger::info "install make cmake gcc gcc-c++ chkconfig automake autoconf libtool"
     yum -y install make cmake gcc gcc-c++ chkconfig automake autoconf libtool
 
     #MySQL
     if [ -d "/usr/local/src/mysql-5.5.31" ]; then
+        logger::info "mysql::install"
         mysql::install
     fi
 
     #php
     if [ -d "/usr/local/src/php-5.4.15" ]; then
+        logger::info "php::install"
         php::install
     fi
 
     #nginx
     if [ -d "/usr/local/src/nginx-1.4.1" ]; then
+        logger::info "nginx::install"
         nginx::install
     fi
 
     #xdebug
     if [ -f "/usr/local/src/xdebug-2.2.3.tgz" ]; then
+        logger::info "xdebug::install"
         xdebug::install
     fi
 
     #xtrabackup
     if [ -d "/usr/local/src/percona-xtrabackup-2.1.3" ]; then
+        logger::info "xtrabackup::install"
         xtrabackup::install
     fi
 
