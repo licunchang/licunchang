@@ -118,7 +118,7 @@ PostgreSQL 代码(MySQL 对某些 SQL 语法不支持)如下：
 
 只不过这条语句的结果没有任何意义。
 
-自然连接(Natural join)是等值连接(equi join)的进一步特例化。两表做自然连接时，两表中的**所有名称相同的列**都将被比较，这是隐式的。自然连接得到的结果表中，两表中名称相同的列只出现一次。
+自然连接(Natural join)是等值连接(equi join)的进一步特例化。两表做自然连接时，两表中的 **所有名称相同的列** 都将被比较，这是隐式的。自然连接得到的结果表中，两表中名称相同的列只出现一次。
 
 上面的等值连接可以用自然连接的方式表示如下:
 
@@ -205,7 +205,7 @@ PostgreSQL 代码(MySQL 对某些 SQL 语法不支持)如下：
                  4 | Clerical        |        [NULL] | John
     (24 行记录)
 
-交叉连接**不会应用任何谓词**去过滤结果表中的记录。
+交叉连接 **不会应用任何谓词** 去过滤结果表中的记录。
 
 ## 3 外连接(outer join)
 
@@ -280,7 +280,7 @@ PostgreSQL 代码(MySQL 对某些 SQL 语法不支持)如下：
             [NULL] | [NULL]          |        [NULL] | John
     (7 行记录)
 
-一些数据库系统(如 MySQL)并不直接支持全连接，但它们可以通过左右外连接的并集(参: union)来模拟实现. 和上面等价的实例:
+一些数据库系统(如 MySQL)并不直接支持全连接，但它们可以通过左右外连接的并集(union)来模拟实现. 和上面等价的实例:
     
     SQL> SELECT * FROM employee LEFT JOIN department ON employee.department_id = department.department_id UNION SELECT * FROM employee RIGHT JOIN department ON employee.department_id = department.department_id WHERE employee.department_id IS NULL
 
