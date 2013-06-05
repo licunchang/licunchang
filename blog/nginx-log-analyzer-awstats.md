@@ -45,8 +45,9 @@ awstats_configure.pl 文件能自动帮你生成配置文件，同时将配置�
     SiteDomain="www.licunchang.com"
     DirData="/data/awstats"
     LoadPlugin="decodeutfkeys"
+    DNSLookup=0
 
-其中 `LogFile`对应的是要分析的日志的完整路径，`LogFormat` 对应的是 nginx 默认的 main 日志格式，如下：
+其中 `DNSlookup` 是用来根据参观者ip查询参观者的网域/国家信息，`LogFile`对应的是要分析的日志的完整路径，`LogFormat` 对应的是 nginx 默认的 main 日志格式，如下：
 
     log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
                           '$status $body_bytes_sent "$http_referer" '
