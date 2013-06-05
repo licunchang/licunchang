@@ -135,7 +135,7 @@ PostgreSQL 代码(MySQL 对某些 SQL 语法不支持)如下：
 
 **inner join** 可以用下面的文氏图（[Venn diagram](http://en.wikipedia.org/wiki/Venn_diagram "Venn diagram")）大概表示。
 
-![inner join](images/sql-joins.md/inner-join.png "inner join")
+![inner join](images/sql-join.md/inner-join.png "inner join")
 
 ## 2 交叉连接(cross join)
 
@@ -233,7 +233,7 @@ PostgreSQL 代码(MySQL 对某些 SQL 语法不支持)如下：
 
 **Left outer join** 可以用下面的文氏图（[Venn diagram](http://en.wikipedia.org/wiki/Venn_diagram "Venn diagram")）大概表示。
 
-![Left outer join](images/sql-joins.md/left-outer-join.png "Left outer join")
+![Left outer join](images/sql-join.md/left-outer-join.png "Left outer join")
 
 ## 3.2 右外连接(right outer join)
 
@@ -259,7 +259,7 @@ PostgreSQL 代码(MySQL 对某些 SQL 语法不支持)如下：
 
 **right outer join** 可以用下面的文氏图（[Venn diagram](http://en.wikipedia.org/wiki/Venn_diagram "Venn diagram")）大概表示。
 
-![right outer join](images/sql-joins.md/right-outer-join.png "right outer join")
+![right outer join](images/sql-join.md/right-outer-join.png "right outer join")
 
 ## 3.1 全连接(full outer join)
 
@@ -297,7 +297,7 @@ PostgreSQL 代码(MySQL 对某些 SQL 语法不支持)如下：
 
 **full outer join** 可以用下面的文氏图（[Venn diagram](http://en.wikipedia.org/wiki/Venn_diagram "Venn diagram")）大概表示。
 
-![Full outer join](images/sql-joins.md/full-outer-join.png "Full outer join")
+![Full outer join](images/sql-join.md/full-outer-join.png "Full outer join")
 
 ## References
 
