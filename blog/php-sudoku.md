@@ -6,7 +6,7 @@
 
 ------
 
-闲的蛋疼，写个程序递归一下新闻中"世界最难数独游戏"。
+闲，写个程序递归一下新闻中"世界最难数独游戏"。
 
     8    0    0    0    0    0    0    0    0    
 
@@ -32,12 +32,11 @@
 
     /**
      * 输出数独
-     *
      */
-    function output(& $sudoku){
-        foreach($sudoku as $key_r => $row) {
-            foreach($row as $key_c => $value) {
-                echo $value . "&nbsp;&nbsp;&nbsp;&nbsp;";
+    function output($sudoku){
+        foreach ($sudoku as $key_row => $col) {
+            foreach ($col as $key_col => $value_col) {
+                echo $value_col . "&nbsp;&nbsp;&nbsp;";
             }
             echo "<br/><br/>";
         }
@@ -45,12 +44,11 @@
 
     /**
      * 初始化数独
-     *
      */
     function init(& $sudoku){
 
-        for($row = 1; $row <= 9; $row++) { 
-            for($col = 1; $col <= 9; $col++) { 
+        for($row = 1; $row <= 9; $row++) {
+            for($col = 1; $col <= 9; $col++) {
                 $sudoku[$row][$col] = 0;
             }
         }
@@ -80,14 +78,11 @@
 
     /**
      * 根据给出的行列编号给出可用的数字
-     * 
      */
-    function give(& $sudoku, $row, $col, $row_p, $col_p){
-        if($row == 10 || $col == 10){
-            exit;
-        }
+    function advise($sudoku, $row, $col, $row_p, $col_p){
+
         if($sudoku[$row][$col] != 0){
-            return array($sudoku[$row][$col] => 0, );
+            return array($sudoku[$row][$col]);
         }
         $temp = array(
                 1 => 0,
@@ -113,6 +108,7 @@
                 unset($temp[($sudoku[$i][$col])]);
             }
         }
+
         $row_stt = (($row_p - 1) * 3 + 1);
         $row_end = ($row_p * 3);
 
@@ -127,37 +123,46 @@
                 }
             }
         }
-        return $temp;
+        return array_keys($temp);
     }
 
     function sudoku($sudoku, $row = 1, $col = 1){
-        $row ++;
-        if($row > 9){
-            if($col == 9){
-                output($sudoku);
-                exit;
-            }
-            $row = 1;
-            $col ++;
-        }
 
         $row_p = ceil($row / 3);
         $col_p = ceil($col / 3);
-        $available_number = give($sudoku, $row, $col, $row_p, $col_p);
 
-        if(empty($available_number)){
+        $available_numbers = advise($sudoku, $row, $col, $row_p, $col_p);
+
+        if(empty($available_numbers)){
             return false;
         }
-        foreach($available_number as $key => $value) {
-            $sudoku[$row][$col] = $key;
-            if(sudoku($sudoku, $row, $col)){
-                break;
-                if($row == 9 && $col == 9){
-                    break;
+        else{
+
+            $col_next = $col;
+            $row_next = $row + 1;
+            if($row_next > 9){
+                $row_next = 1;
+                $col_next = $col + 1;
+            }
+
+            foreach ($available_numbers as $value) {
+                $sudoku[$row][$col] = $value;
+
+                if ($row == 9 && $col == 9) {
+                    output($sudoku);
+                    return true;
+                }
+                if(sudoku($sudoku, $row_next, $col_next)){
                     return true;
                 }
             }
+            return false;
         }
+    }
+
+    function shutdown_func(){
+        echo microtime(true)."<br/>";
+        echo memory_get_usage();
     }
 
     ini_set('max_input_nesting_level', '9999999');
@@ -166,11 +171,13 @@
 
     $sudoku = array();
 
+    echo microtime(true)."<br/><br/>";
+
     init($sudoku);
 
-    //sudoku($sudoku, 0, 1);
+    sudoku($sudoku);
 
-    output($sudoku);
+    register_shutdown_function("shutdown_func"); 
 
 擦，写的好烂啊！
 
