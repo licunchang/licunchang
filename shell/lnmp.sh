@@ -92,7 +92,7 @@ mysql::install() {
 
     if [[ "${mysql_user}" != "mysql" ]]; then
         logger::info "create user:mysql"
-        /usr/sbin/useradd -g mysql -M -r -s /sbin/nologin mysql
+        /usr/sbin/useradd -g mysql -M -r -s /bin/false mysql
         if [[ "$?" -ne 0 ]]; then
             logger::error "can't create a user for mysql"
             exit 1
@@ -343,7 +343,7 @@ php::install() {
 
     if [[ "${php_user}" != "www" ]]; then
         logger::info "create user:www"
-        /usr/sbin/useradd -g www -M -r -s /sbin/nologin www
+        /usr/sbin/useradd -g www -M -r -s /bin/false www
         if [[ "$?" -ne 0 ]]; then
             logger::error "can't create a user for php-fpm"
             exit 1
@@ -540,7 +540,7 @@ nginx::install() {
 
     if [[ "${nginx_user}" != "www" ]]; then
         logger::info "create user:www"
-        /usr/sbin/useradd -g www -M -r -s /sbin/nologin www
+        /usr/sbin/useradd -g www -M -r -s /bin/false www
         if [[ "$?" -ne 0 ]]; then
             logger::error "can't create a user for nginx"
             exit 1
@@ -882,7 +882,7 @@ prepare() {
     fi
 
     if [[ "${nginx_user}" != "${user}" ]]; then
-        /usr/sbin/useradd -r -M -g ${nginx_group} -s /sbin/nologin ${nginx_user}
+        /usr/sbin/useradd -r -M -g ${nginx_group} -s /bin/false ${nginx_user}
         if [[ "$?" -ne 0 ]]; then
             echo "can't create a user for nginx"
             exit 1
