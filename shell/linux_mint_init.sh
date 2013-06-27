@@ -159,7 +159,7 @@ qemu-img create -f raw /home/licunchang/VMachines/CentOS-6.4-x86_64-10_10_10_10.
 
 qemu-system-x86_64 -drive file=/home/licunchang/VMachines/CentOS-6.4-x86_64-10_10_10_10.img -cdrom /home/licunchang/Downloads/CentOS-6.4-x86_64-bin-DVD1.iso -boot d -m 2048
 
-qemu-system-x86_64 -drive file=/home/licunchang/VMachines/CentOS-6.4-x86_64-10_10_10_10.img -cdrom /home/licunchang/Downloads/CentOS-6.4-x86_64-bin-DVD1.iso -boot c -m 2048
+qemu-system-x86_64 -enable-kvm -drive file=/home/licunchang/VMachines/CentOS-6.4-x86_64-10_10_10_10.img -cdrom /home/licunchang/Downloads/CentOS-6.4-x86_64-bin-DVD1.iso -boot c -m 2048
 
 # boot from cdrom using iso image resource
 # memery is 2048MB
