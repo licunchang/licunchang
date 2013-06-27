@@ -14,6 +14,7 @@
 #   None
 ################################################################################
 logger::error() {
+    # `date --iso-8601=ns`
     echo "[error:$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2
     exit 1
 }
@@ -721,6 +722,9 @@ server {
     
     location ~ .*\.(gif|jpg|jpeg|png|bmp|swf|js|ico|css)$ {
         expires      360d;
+        
+        add_header Cache-Control no-cache;
+        add_header Cache-Control private;
     }
 
     location ~ /\. {
@@ -772,6 +776,9 @@ server {
     
     location ~ .*\.(gif|jpg|jpeg|png|bmp|swf|js|ico|css)$ {
         expires      360d;
+        
+        add_header Cache-Control no-cache;
+        add_header Cache-Control private;
     }
 
     location ~ /\. {
