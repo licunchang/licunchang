@@ -31,6 +31,10 @@ PHP 递归计算所谓“世界最难数独游戏”
 
 SQL 中的 join 语法
 
+### vim-textwidth-80.md
+
+Vim 字行宽度设置
+
 ## shell
 
 ### lamp.sh
