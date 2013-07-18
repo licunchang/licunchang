@@ -79,6 +79,18 @@ Examples 5 防止盗链
     if ($invalid_referer) {
         return 403;
     }
+        
+**注意** nginx 是不支持 `if` 嵌套的，同时 `condition` 中不能使用多条件判断，下面的两则都是错误的。
+
+    if (condition) {
+        if (condition) {
+            # 不支持嵌套
+        }
+    }
+
+    if (condition_1 && condition_2) {
+        # 不支持多条件判断
+    }
 
 ### 2.3 return
 
@@ -159,7 +171,13 @@ rewrite 只能操作 `/user/info` 这一部分，也就是变量 `$uri` 的值�
             rewrite ^ $scheme://$host/userinfo.php?id=$arg_id? permanent;
         }
     }
+    
+再比如要将 /friend.php?act=friend&fid=200000 重定向到 /user_info.php?act=others&uid=200000 使用下面的方法。
 
+    if ($args ~* "act=friend&fid=\d+$"){
+        rewrite ^/friend.php$ /user_info.php?act=others&uid=$arg_fid? permanent;
+    }
+ 
 ### 2.5 rewrite\_log
 
 > **syntax:**    `rewrite_log on | off;`  
