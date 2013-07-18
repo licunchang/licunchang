@@ -155,7 +155,7 @@
     innodb_log_buffer_size = 8M
     innodb_flush_log_at_trx_commit = 1
     innodb_lock_wait_timeout = 50
-    
+
 其中
 
 * **innodb\_data\_file\_path** 调整数据库表空间增量
@@ -452,7 +452,7 @@
         listen       80;
         server_name  www.licunchang.com;
         
-        root   /data/web/www.licunchang.com;
+        root  /data/web/www.licunchang.com;
         
         #charset utf-8;
 
@@ -501,7 +501,7 @@
         listen       80;
         server_name  mysql.licunchang.com;
         
-        root   /data/web/mysql.licunchang.com;
+        root  /data/web/mysql.licunchang.com;
         
         #charset utf-8;
 
@@ -560,8 +560,8 @@
 
         location / {
             # allow 10.10.10.0/24;
-            stub_status on;
-            access_log   off;
+            stub_status  on;
+            access_log  off;
         }
     }
     # END --------------------------------------------- status.licunchang.com.conf
