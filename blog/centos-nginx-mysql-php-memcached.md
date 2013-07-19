@@ -46,7 +46,7 @@
 
 ### 1.3 所需源码包
 
-*  nginx-1.2.8.tar.gz
+*  nginx-1.4.2.tar.gz
 *  openssl-1.0.1e.tar.gz
 *  pcre-8.32.tar.gz
 *  mysql-5.5.31.tar.gz
@@ -71,8 +71,8 @@
 
 添加一个MySQL使用的用户和用户组：
 
-    /usr/sbin/groupadd mysql
-    /usr/sbin/useradd -M -g mysql mysql -s /bin/false
+    /usr/sbin/groupadd -r mysql
+    /usr/sbin/useradd -g mysql -M -r -s /bin/false mysql
     
 将MySQL的数据文件放置在/data/mysql目录下，配置文件my.cnf放置在/etc/mysql目录下：
 
@@ -84,8 +84,8 @@
 ### 2.3 源码安装
 
     cd /usr/local/src
-    tar zxvf /usr/local/src/mysql-5.5.31.tar.gz
-    cd /usr/local/src/mysql-5.5.31
+    tar zxvf /usr/local/src/mysql-5.5.32.tar.gz
+    cd /usr/local/src/mysql-5.5.32
     cmake . -DCMAKE_INSTALL_PREFIX=/usr/local/mysql -DMYSQL_DATADIR=/data/mysql -DSYSCONFDIR=/etc/mysql -DDEFAULT_CHARSET=utf8 -DDEFAULT_COLLATION=utf8_general_ci -DWITH_EXTRA_CHARSETS=all -DWITH_INNOBASE_STORAGE_ENGINE=1 -DWITH_ARCHIVE_STORAGE_ENGINE=1 -DWITH_BLACKHOLE_STORAGE_ENGINE=1 -DWITH_PERFSCHEMA_STORAGE_ENGINE=1 -DWITHOUT_EXAMPLE_STORAGE_ENGINE=1 -DWITHOUT_FEDERATED_STORAGE_ENGINE=1 -DWITHOUT_PARTITION_STORAGE_ENGINE=1 -DWITH_READLINE=1 -DWITH_LIBWRAP=1 -DENABLED_LOCAL_INFILE=1 -DENABLED_PROFILING=1 -DMYSQL_TCP_PORT=3306 -DWITH_ZLIB=system
     make
     make install
@@ -271,8 +271,8 @@
 
 ### 3.3 创建 nginx 及 php-fpm 运行用户及用户组
     
-    /usr/sbin/groupadd www
-    /usr/sbin/useradd -M -g www www -s /bin/false
+    /usr/sbin/groupadd -r www
+    /usr/sbin/useradd -g www -M -r -s /bin/false www
     
 ### 3.4 安装php
 
