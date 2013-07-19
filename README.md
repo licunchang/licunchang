@@ -53,7 +53,7 @@ CentOS 下安装 xtrabackup & memcached & redis & varnish & tcpdump 等。
 
 Nginx 的启停脚本 /etc/init.d/nginx 
 
-### nginx_logs_cut.sh
+### nginx\_logs\_cut.sh
 
 Nginx 的日志切割脚本 
 
