@@ -11,6 +11,10 @@ CentOS 下安装 Nginx MySQL PHP Memcached 步骤。
 
 MySQL Character Set & Collation 介绍
 
+### mysql-user-defined-variables-example-1.md
+
+MySQL 用户自定义变量示例一则
+
 ### nginx-http-rewrite.md
 
 nginx rewrite 模块入门
