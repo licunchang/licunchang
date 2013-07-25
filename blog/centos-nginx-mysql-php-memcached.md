@@ -1,8 +1,8 @@
 **File Name** centos-nginx-mysql-php-memcached.md  
 
-**Description** CentOS6.4下安装Nginx1.2.8-MySQL5.5.31-PHP5.4.14-Memcached1.4.15    
+**Description** LNMP (Linux:CentOS6.4 + Nginx + MySQL + PHP) 安装文档    
 **Author** LiCunchang(printf@live.com)  
-**Version** 2.0.20130326  
+**Version** 3.0.20130326  
 
 ------
 
@@ -49,7 +49,7 @@
 *  nginx-1.4.2.tar.gz
 *  openssl-1.0.1e.tar.gz
 *  pcre-8.32.tar.gz
-*  mysql-5.5.31.tar.gz
+*  mysql-5.5.32.tar.gz
 *  php-5.4.14.tar.gz
 *  libiconv-1.14.tar.gz
 *  mcrypt-2.6.8.tar.gz
@@ -116,7 +116,7 @@
 
 >This is a MySQL example config file for systems with 4GB of memory running mostly MySQL using InnoDB only tables and performing complex queries with few connections.    
 
-    cd /usr/local/src/mysql-5.5.31
+    cd /usr/local/src/mysql-5.5.32
     cp ./support-files/my-medium.cnf /etc/mysql/my.cnf
 
 编辑my.cnf文件
@@ -283,8 +283,8 @@
     make install
 
     cd /usr/local/src
-    tar zxvf php-5.4.14.tar.gz
-    cd /usr/local/src/php-5.4.14
+    tar zxvf php-5.4.17.tar.gz
+    cd /usr/local/src/php-5.4.17
     ./configure --prefix=/usr/local/php --with-config-file-path=/usr/local/php/etc --enable-bcmath --enable-shmop --enable-sysvsem --enable-ftp --with-curl --with-curlwrappers --with-png-dir --with-jpeg-dir --with-freetype-dir --with-gd --enable-gd-native-ttf --enable-mbstring --enable-soap --enable-sockets --enable-zip --with-xmlrpc --with-mysql=/usr/local/mysql --with-mysqli=/usr/local/mysql/bin/mysql_config --with-pdo-mysql=/usr/local/mysql/ --enable-fpm --with-fpm-user=www --with-fpm-group=www --with-zlib --with-iconv-dir=/usr/local/libiconv/ --with-pcre-dir=/usr/local/pcre --with-libxml-dir --with-mcrypt=/usr/local/libmcrypt/ --with-mhash=/usr/local/mhash/ --disable-ipv6
     make
     # make test #注意:make test可能有错

@@ -5,7 +5,7 @@ LiCunchang(printf@live.com)[![新浪微博](http://img.t.sinajs.cn/t4/style/imag
 
 ### centos-nginx-mysql-php-memcached.md
 
-CentOS 下安装 Nginx MySQL PHP Memcached 步骤。
+LNMP (Linux:CentOS6.4 + Nginx + MySQL + PHP) 安装文档
 
 ### mysql-character-set-collation.md
 
@@ -21,11 +21,7 @@ nginx rewrite 模块入门
 
 ### nginx-log-analyzer-awstats.md
 
-nginx 日志分析工具 awstats
-
-### php-interview-questions-and-answers.md
-
-PHP 笔试题目(英文 & 中文)
+nginx 日志分析工具 awstats 使用简介
 
 ### php-sudoku.md
 
@@ -37,23 +33,23 @@ SQL 中的 join 语法
 
 ### vim-textwidth-80.md
 
-Vim 字行宽度设置
+Vim 字行宽度 80 设置
 
 ## shell
 
 ### lamp.sh
 
-CentOS 下安装 httpd MySQL PHP 脚本。
+LAMP (Linux:CentOS6.4 + Apache + MySQL + PHP) 安装脚本
 
 ### lnmp.sh
 
-CentOS 下安装 Nginx MySQL PHP 脚本，是 **centos-nginx-mysql-php-memcached.md** 的实现。
+LNMP (Linux:CentOS6.4 + Nginx + MySQL + PHP) 安装脚本
 
 ### lnmpex.sh
 
-CentOS 下安装 xtrabackup & memcached & redis & varnish & tcpdump 等。
+CentOS 下安装 xtrabackup & memcached & redis & varnish & tcpdump 等
 
-### nginx.init.d
+### nginx.init.sh
 
 Nginx 的启停脚本 /etc/init.d/nginx 
 

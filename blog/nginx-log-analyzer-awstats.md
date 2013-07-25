@@ -6,7 +6,7 @@
 
 ------
 
-下载之后详细的文档在 _path-awstats-[vsersion]_/docs/ 中存在，能够阅读英文的话可以直接参考官方文档。
+下载之后详细的文档在 \_path-awstats-[vsersion]\_/docs/ 中存在，能够阅读英文的话可以直接参考官方文档。
 
 ## 1 Installation
 

@@ -273,8 +273,18 @@ Column 的 character set 和 collation 的设定规则如下：
 
 
 
+## Connection Character Sets and Collations
 
 
+在一个客户端和服务器的连接中有很多的 character set 和 collation 的变量，有很多在前面的已经提到过
+
+还有很多其他的变量在一个客户端和服务器的交互中被使用，每一个客户端都有一个与连接相关的 character set 和 collation 系统变量，这里的连接是你连接到服务器时建立的那个东西，客户端通过连接发送 SQL 表达式，例如一个查询到服务器，服务器通过连接返回给相应给客户端，例如结果集或者错误信息，这导致了很多连接过程中的character set 和 collation的问题，这些问题都能通过一系列的系统变量来解决
+
+哪一种 character set 和 collation 是表达式离开客户端时使用的呢？
+
+ 服务器接到表达式之后用哪种 character set 转换  
+
+ 
 
 
 
