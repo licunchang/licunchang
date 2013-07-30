@@ -1,25 +1,25 @@
 **File Name** centos-nginx-mysql-php-memcached.md  
 
 **Description** LNMP (Linux:CentOS6.4 + Nginx + MySQL + PHP) 安装文档    
-**Author** LiCunchang(printf@live.com)  
-**Version** 3.0.20130326  
+**Author** LiCunchang(printf@live.com)   
+**Version** 3.0.20130728  
 
 ------
 
 ## 1 准备
 
-### 1.1 yum源配置  
+### 1.1 yum 源配置  
 
-如果没有可用的网络进行yum(Yellow dog Updater, Modified)安装则需要配置本地的yum安装源，使用本地光盘作为yum源，如果有网络连接可用，则推荐使用163的yum源，跳过本步骤，具体详见[CentOS镜像使用帮助](http://mirrors.163.com/.help/centos.html)。
+如果没有可用的网络进行 yum(Yellow dog Updater, Modified)安装则需要配置本地的 yum 安装源，使用本地光盘作为 yum 源，如果有网络连接可用，则推荐使用163的 yum 源，跳过本步骤，具体详见[CentOS镜像使用帮助](http://mirrors.163.com/.help/centos.html)。
 
     mkdir /mnt/cdrom
     mount /dev/cdrom /mnt/cdrom
     cd /etc/yum.repos.d/
 
-禁用掉系统中其他的yum源有两种方式：  
+禁用掉系统中其他的 yum 源有两种方式：  
 
-1.将以.repo结尾的文件重命名  
-2.将每个配置文件中的enabled=1改为enabled=0  
+1.将以 .repo 结尾的文件重命名  
+2.将每个配置文件中的 enabled=1 改为 enabled=0  
 
     mv CentOS-Base.repo CentOS-Base.repo_licunchang.bak
     mv CentOS-Debuginfo.repo CentOS-Debuginfo.repo_licunchang.bak
@@ -36,7 +36,7 @@
     gpgcheck=0
     enabled=1
 
-重建yum缓存
+重建 yum 缓存
 
     yum makecache
 
@@ -48,18 +48,18 @@
 
 *  nginx-1.4.2.tar.gz
 *  openssl-1.0.1e.tar.gz
-*  pcre-8.32.tar.gz
+*  pcre-8.33.tar.gz
 *  mysql-5.5.32.tar.gz
-*  php-5.4.14.tar.gz
+*  php-5.4.17.tar.gz
 *  libiconv-1.14.tar.gz
 *  mcrypt-2.6.8.tar.gz
 *  mhash-0.9.9.9.tar.gz
 *  libmcrypt-2.5.8.tar.gz
 *  libevent-2.0.21-stable.tar.gz
 *  memcached-1.4.15.tar.gz
-*  re2c-0.13.5.tar.gz
+*  re2c-0.13.6.tar.gz
 
-所有的源码包放置在/usr/local/src目录下。
+所有的源码包放置在 /usr/local/src 目录下。
 
 ## 2 MySQL
 
@@ -69,32 +69,34 @@
   
 ### 2.2 创建运行账户及数据目录
 
-添加一个MySQL使用的用户和用户组：
+添加一个 MySQL 使用的用户和用户组(`-r`:添加一个系统用户或用户组)：
 
     /usr/sbin/groupadd -r mysql
     /usr/sbin/useradd -g mysql -M -r -s /bin/false mysql
     
-将MySQL的数据文件放置在/data/mysql目录下，配置文件my.cnf放置在/etc/mysql目录下：
+将 MySQL 的数据文件放置在 /data/mysql 目录下，配置文件 my.cnf 放置在 /etc/mysql 目录下：
 
     mkdir -p /data/mysql
     chown -R mysql:mysql /data/mysql
     mkdir -p /etc/mysql
     chown -R mysql:mysql /etc/mysql
-    
+
+MySQL 的 bin-log 是顺序写日志，需要提供较高的顺序写能力，MySQL 的数据日志需要提供较高的随机读写能力。与此同时，有条件的情况下将 bin-log 和数据文件分开存储是有益处的，而事务日志则可以和数据文件存放在一起。
+
 ### 2.3 源码安装
 
     cd /usr/local/src
     tar zxvf /usr/local/src/mysql-5.5.32.tar.gz
     cd /usr/local/src/mysql-5.5.32
-    cmake . -DCMAKE_INSTALL_PREFIX=/usr/local/mysql -DMYSQL_DATADIR=/data/mysql -DSYSCONFDIR=/etc/mysql -DDEFAULT_CHARSET=utf8 -DDEFAULT_COLLATION=utf8_general_ci -DWITH_EXTRA_CHARSETS=all -DWITH_INNOBASE_STORAGE_ENGINE=1 -DWITH_ARCHIVE_STORAGE_ENGINE=1 -DWITH_BLACKHOLE_STORAGE_ENGINE=1 -DWITH_PERFSCHEMA_STORAGE_ENGINE=1 -DWITHOUT_EXAMPLE_STORAGE_ENGINE=1 -DWITHOUT_FEDERATED_STORAGE_ENGINE=1 -DWITHOUT_PARTITION_STORAGE_ENGINE=1 -DWITH_READLINE=1 -DWITH_LIBWRAP=1 -DENABLED_LOCAL_INFILE=1 -DENABLED_PROFILING=1 -DMYSQL_TCP_PORT=3306 -DWITH_ZLIB=system
+    cmake . -DCMAKE_INSTALL_PREFIX=/usr/local/mysql -DMYSQL_DATADIR=/data/mysql -DSYSCONFDIR=/etc/mysql -DDEFAULT_CHARSET=utf8 -DDEFAULT_COLLATION=utf8_general_ci -DWITH_EXTRA_CHARSETS=all -DWITH_INNOBASE_STORAGE_ENGINE=1 -DWITH_ARCHIVE_STORAGE_ENGINE=1 -DWITH_BLACKHOLE_STORAGE_ENGINE=1 -DWITH_PERFSCHEMA_STORAGE_ENGINE=1 -DWITHOUT_EXAMPLE_STORAGE_ENGINE=1 -DWITHOUT_FEDERATED_STORAGE_ENGINE=1 -DWITHOUT_PARTITION_STORAGE_ENGINE=1 -DWITH_READLINE=1 -DWITH_LIBWRAP=1 -DENABLED_LOCAL_INFILE=1 -DENABLED_PROFILING=1 -DMYSQL_TCP_PORT=3306 -DWITH_ZLIB=bundled
     make
     make install
     
-### 2.4 配置my.cnf文件
+### 2.4 配置 my.cnf 文件
 
     rm -f /etc/my.cnf
     
-系统提供了几个配置文件样例，可根据系统资源情况进行设置，各配置文件的说明如下：    
+系统提供了几个配置文件样例，如果不精通各项配置，可根据系统资源情况修改官方样例，各配置文件的说明如下：    
 
 * my-huge.cnf 
 
@@ -119,11 +121,11 @@
     cd /usr/local/src/mysql-5.5.32
     cp ./support-files/my-medium.cnf /etc/mysql/my.cnf
 
-编辑my.cnf文件
+编辑 my.cnf 文件
 
     vi /etc/mysql/my.cnf
 
-添加字符集配置和慢查询日志，记录没有使用索引的查询，仅限测试环境调试。
+添加字符集配置和慢查询日志，记录没有使用索引的查询，`general-log` 将开启一般日志，所有查询语句将记录到日志中，不推荐在生产环境中使用，仅限测试环境调试。log-bin 记录 master 服务器的 bin_log 的名称，如果不设置此选项，那么 MySQL 使用 `hostname-bin` 的形式，如果主机更改 hostname 那么 slaver 服务器将无法找到主服务器的 bin-log 从而产生错误，从这个角度上讲，设置一个 bin-log 名称是有必要的。
 
     [client]
     default-character-set=utf8
@@ -139,8 +141,11 @@
     slow-query-log
     log-queries-not-using-indexes
     innodb_file_per_table
+    server-id=1
+    log-bin=master-bin
+    log-bin-index=master-bin.index
     
-使用InnoDB打开以下选项
+使用 InnoDB 打开以下选项
 
     # Uncomment the following if you are using InnoDB tables
     innodb_data_home_dir = /data/mysql
@@ -168,13 +173,13 @@
 
 ### 2.7 创建 MySQL 启动停止脚本
 
-你可以把MySQL加入系统启动，系统启动时自动启动MySQL服务：
+你可以把 MySQL 加入系统启动，系统启动时自动启动 MySQL 服务，不过生产环境不推荐这么做。
 
     cp /usr/local/mysql/support-files/mysql.server  /etc/rc.d/init.d/mysql
 
     vi /etc/rc.d/init.d/mysql
 
-编辑MySQL启动脚本，设置basedir和datadir：
+编辑 MySQL 启动脚本，设置 basedir 和 datadir
 
     basedir=/usr/local/mysql
     datadir=/data/mysql
@@ -185,18 +190,18 @@
     chkconfig --add mysql
     chkconfig --level 35 mysql on
     
-启动mysql服务
+启动 MySQL 服务
 
     service mysql start
 
 ### 2.8 MySQL安全设置
 
-修改密码
+MySQL 提供了一个脚本在安装初期修改密码的脚本，执行脚本，按照提醒即可对默认密码用户等进行修改
 
     cd /usr/local/mysql/
     /usr/local/mysql/bin/mysql_secure_installation
 
-登录MySQL服务器
+登录 MySQL 服务器
 
     /usr/local/mysql/bin/mysql -uroot -p
 
@@ -209,17 +214,17 @@
 
     GRANT INSERT, DELETE, UPDATE, SELECT ON licunchang.* TO 'username'@'%' IDENTIFIED BY 'password' WITH GRANT OPTION;
 
-### 2.9 MySQL防火墙设置
+### 2.9 MySQL 防火墙设置
 
-配置防火墙，开启3306端口
+配置防火墙，开启 3306 端口
 
     vi /etc/sysconfig/iptables
 
-把这条规则添加到默认的22端口这条规则的下面
+把这条规则添加到默认的 22 端口这条规则的下面
 
     -A INPUT -m state --state NEW -m tcp -p tcp --dport 3306 -j ACCEPT
 
-重新启动iptables服务
+重新启动 iptables 服务
 
     service iptables restart
 
@@ -229,7 +234,7 @@
 
     yum -y install libxml2 libjpeg freetype libpng gd curl fontconfig libxml2-devel curl-devel libjpeg-devel libpng-devel freetype-devel
     
-### 3.2 安装libiconv
+### 3.2 安装 libiconv
 
     cd /usr/local/src
     tar zxvf libiconv-1.14.tar.gz
@@ -238,7 +243,7 @@
     make
     make install
     
-### 3.2 安装libmcrypt & mhash & mcrypt
+### 3.2 安装 libmcrypt & mhash & mcrypt
 
     cd /usr/local/src
     tar zxvf libmcrypt-2.5.8.tar.gz
@@ -274,10 +279,10 @@
     /usr/sbin/groupadd -r www
     /usr/sbin/useradd -g www -M -r -s /bin/false www
     
-### 3.4 安装php
+### 3.4 安装 php
 
     cd /usr/local/src
-    tar zxvf re2c-0.13.5.tar.gz
+    tar zxvf re2c-0.13.6.tar.gz
     ./configure
     make
     make install
@@ -307,6 +312,8 @@
     user = www
     group = www
 
+pm 这几个选项在 php-fpm.conf 中有详细的功能描述，不清楚的可以查看文档注释
+
     pm = dynamic
 
     pm.max_children = 8
@@ -323,6 +330,8 @@
 
 ### 3.6 把 php-fpm 加入系统启动
 
+同样的，生产环境中不推荐这么做
+
     cp /usr/local/src/php-5.4.14/sapi/fpm/init.d.php-fpm /etc/rc.d/init.d/php-fpm
     chmod 755 /etc/rc.d/init.d/php-fpm
     chkconfig --add php-fpm
@@ -337,8 +346,8 @@
 ### 4.1 安装 pcre
 
     cd /usr/local/src
-    tar zxvf pcre-8.32.tar.gz
-    cd /usr/local/src/pcre-8.32
+    tar zxvf pcre-8.33.tar.gz
+    cd /usr/local/src/pcre-8.33
     ./configure  --prefix=/usr/local/pcre --enable-utf --enable-pcre16 --enable-pcre32 --enable-jit --enable-unicode-properties
     make
     make install
@@ -348,19 +357,19 @@
     cd /usr/local/src
     tar zxvf openssl-1.0.1e.tar.gz
     
-    tar zxvf nginx-1.2.8.tar.gz
-    cd /usr/local/src/nginx-1.2.8
+    tar zxvf nginx-1.4.2.tar.gz
+    cd /usr/local/src/nginx-1.4.2
 
 安全原因，你可以修改 Nginx 的服务器标识信息
 
     sed -i 's/nginx\b/Microsoft-IIS/g' ./src/core/nginx.h
-    sed -i 's/1.2.8/7.5/' ./src/core/nginx.h
+    sed -i 's/1.4.2/7.5/' ./src/core/nginx.h
     sed -i 's/Server: nginx/Server: Microsoft-IIS/' ./src/http/ngx_http_header_filter_module.c
     sed -i 's/>nginx</>Microsoft-IIS</' ./src/http/ngx_http_special_response.c
     
 安装
 
-    ./configure --with-http_stub_status_module --with-http_gzip_static_module --with-http_ssl_module --with-openssl=/usr/local/src/openssl-1.0.1e --user=www --group=www --prefix=/usr/local/nginx --with-pcre=/usr/local/src/pcre-8.32 --with-http_realip_module --with-cpu-opt=amd64
+    ./configure --with-http_stub_status_module --with-http_gzip_static_module --with-http_ssl_module --with-openssl=/usr/local/src/openssl-1.0.1e --user=www --group=www --prefix=/usr/local/nginx --with-pcre=/usr/local/src/pcre-8.33 --with-http_realip_module --with-cpu-opt=amd64
     make
     make install
 
@@ -566,18 +575,20 @@
     }
     # END --------------------------------------------- status.licunchang.com.conf
 
-    chown www.www /data/web/mysql.licunchang.com  -R
+    chown www:www /data/web/mysql.licunchang.com  -R
     chmod 744 /data/web/mysql.licunchang.com  -R
     
 ### 4.5 把 nginx 加入系统启动
 
+同样不推荐在生产环境中作为服务自动启动
+
     vi /etc/rc.d/init.d/nginx
 
-开机[启动脚本](http://wiki.nginx.org/RedHatNginxInitScript)内容
+开机[启动脚本](http://wiki.nginx.org/RedHatNginxInitScript)内容(有所修改)
 
     #!/bin/bash
     #
-    # nginx - this script starts and stops the nginx daemon
+    # nginx    Start/Stop the cron clock daemon.
     #
     # chkconfig: 35 85 15
     # description: Nginx is an HTTP and reverse proxy server, as well as a mail proxy server.
@@ -587,69 +598,113 @@
     # config:   /usr/local/nginx/conf/nginx.conf
     # pidfile:  /usr/local/nginx/logs/nginx.pid
 
-    # Source function library.
-    . /etc/rc.d/init.d/functions
+    ################################################################################
+    # Make required directories | user | group .
+    # Globals:
+    #   NGINX_SBIN_FILE
+    # Arguments:
+    #   None
+    # Returns:
+    #   None
+    ################################################################################
+    prepare() {
 
-    # Source networking configuration.
-    . /etc/sysconfig/network
+        local options="$(${NGINX_SBIN_FILE} -V 2>&1 | grep 'configure arguments:')"
 
-    # Check that networking is up.
-    [ "${NETWORKING}" = "no" ] && exit 6
+        local nginx_user="$(echo ${options} | sed 's/[^*]*--user=\([^ ]*\).*/\1/g')"
+        local nginx_group="$(echo ${options} | sed 's/[^*]*--group=\([^ ]*\).*/\1/g')"
 
-    NGINX="/usr/local/nginx/sbin/nginx"
-    NGINX_CONF_FILE="/usr/local/nginx/conf/nginx.conf"
+        local group=$(grep "^${nginx_group}" /etc/group | awk -F: '{print $1}')
+        local user=$(grep "^${nginx_user}" /etc/passwd | awk -F: '{print $1}')
 
-    prog=$(basename $NGINX)
-    lockfile=/var/lock/subsys/nginx
-
-    # make required directories
-    make_dirs() {
-        NGINX_USER=`$NGINX -V 2>&1 | grep "configure arguments:" | sed 's/[^*]*--user=\([^ ]*\).*/\1/g' -`
-        if [ -z "`grep $NGINX_USER /etc/passwd`" ]; then
-            if [ -z "`grep $NGINX_USER /etc/group`" ]; then
-                /usr/sbin/groupadd $NGINX_USER
+        if [[ "${nginx_group}" != "${group}" ]]; then
+            /usr/sbin/groupadd -r "${nginx_group}"
+            if [[ "$?" -ne 0 ]]; then
+                echo "can't create a group for nginx"
+                exit 1
             fi
-            /usr/sbin/useradd -M -g $NGINX_USER -s /bin/false $NGINX_USER
         fi
-        OPTIONS=`$NGINX -V 2>&1 | grep 'configure arguments:'`
-        for OPT in $OPTIONS; do
-            if [ `echo $OPT | grep '.*-temp-path'` ]; then
-                VALUE=`echo $OPT | cut -d "=" -f 2`
-                if [ ! -d "$VALUE" ]; then
-                    # echo "creating" $value
-                    mkdir -p $VALUE && chown -R $NGINX_USER $VALUE
+
+        if [[ "${nginx_user}" != "${user}" ]]; then
+            /usr/sbin/useradd -r -M -g ${nginx_group} -s /bin/false ${nginx_user}
+            if [[ "$?" -ne 0 ]]; then
+                echo "can't create a user for nginx"
+                exit 1
+            fi
+        fi
+
+        for option in ${options}; do
+            if [[ -n "$(echo ${option} | grep '.*-temp-path')" ]]; then
+                directory="$(echo $option | cut -d "=" -f 2)"
+                if [[ ! -d "${directory}" ]]; then
+                    mkdir -p "${directory}" && chown -R "${nginx_user}" "${directory}"
                 fi
             fi
         done
     }
 
+    ################################################################################
+    # Start up nginx.
+    # Globals:
+    #   NGINX_SBIN_FILE
+    #   NGINX_CONF_FILE
+    #   NGINX_LOCK_FILE
+    #   NGINX_PROG_NAME
+    # Arguments:
+    #   None
+    # Returns:
+    #   Integer
+    ################################################################################
     start() {
-        if [ ! -x $NGINX ]; then
+        if [[ ! -x ${NGINX_SBIN_FILE} ]]; then
             exit 1
         fi
-        if [ ! -f $NGINX_CONF_FILE ]; then
+        if [[ ! -f ${NGINX_CONF_FILE} ]]; then
             exit 6
         fi
 
-        make_dirs
-        echo -n $"Starting $prog: "
-        daemon $NGINX -c $NGINX_CONF_FILE
-        RETVAL=$?
+        prepare
+        echo -n "Starting ${NGINX_PROG_NAME}: "
+        daemon ${NGINX_SBIN_FILE} -c ${NGINX_CONF_FILE}
+        exit_code=$?
         echo
-        [ $RETVAL -eq 0 ] && touch $lockfile
-        return $RETVAL
+        if [[ ${exit_code} -eq 0 ]]; then
+            touch ${NGINX_LOCK_FILE}
+        fi
+        return ${exit_code}
     }
 
+    ################################################################################
+    # Stop nginx.
+    # Globals:
+    #   NGINX_PROG_NAME
+    #   NGINX_LOCK_FILE
+    # Arguments:
+    #   None
+    # Returns:
+    #   Integer
+    ################################################################################
     stop() {
-        echo -n $"Stopping $prog: "
+        echo -n "Stopping ${NGINX_PROG_NAME}: "
         # QUIT:graceful shutdown
-        killproc $prog -QUIT
-        RETVAL=$?
+        killproc ${NGINX_PROG_NAME} -QUIT
+        exit_code=$?
         echo
-        [ $RETVAL -eq 0 ] && rm -f $lockfile
-        return $RETVAL
+        if [[ ${exit_code} -eq 0 ]]; then
+            rm -f ${NGINX_LOCK_FILE}
+        fi
+        return ${exit_code}
     }
 
+    ################################################################################
+    # Retart nginx.
+    # Globals:
+    #   None
+    # Arguments:
+    #   None
+    # Returns:
+    #   None
+    ################################################################################
     restart() {
         configtest || return $?
         stop
@@ -657,38 +712,102 @@
         start
     }
 
+    ################################################################################
+    # Reload nginx configuration file.
+    # Globals:
+    #   NGINX_PROG_NAME
+    #   NGINX_SBIN_FILE
+    # Arguments:
+    #   None
+    # Returns:
+    #   Integer
+    ################################################################################
     reload() {
         configtest || return $?
-        echo -n $"Reloading $prog: "
+        echo -n "Reloading ${NGINX_PROG_NAME}: "
         # changing configuration, keeping up with a changed time zone (only for FreeBSD and Linux), 
         # starting new worker processes with a new configuration, graceful shutdown of old worker processes
-        killproc $NGINX -HUP
-        RETVAL=$?
+        killproc ${NGINX_SBIN_FILE} -HUP
+        exit_code=$?
         echo
-        return $RETVAL
+        return ${exit_code}
     }
 
+    ################################################################################
+    # Re-opening nginx log files.
+    # Globals:
+    #   NGINX_SBIN_FILE
+    # Arguments:
+    #   None
+    # Returns:
+    #   Integer
+    ################################################################################
     reopen-logs() {
         configtest || return $?
-        echo -n $"Re-opening log files: "
+        echo -n "Re-opening ${NGINX_PROG_NAME} log files: "
         # re-opening log files
-        killproc $NGINX -USR1
-        RETVAL=$?
+        killproc ${NGINX_SBIN_FILE} -USR1
+        exit_code=$?
         echo
-        return $RETVAL
+        return ${exit_code}
     }
 
+    ################################################################################
+    # Check the nginx configuration file.
+    # Globals:
+    #   NGINX_SBIN_FILE
+    #   NGINX_CONF_FILE
+    # Arguments:
+    #   None
+    # Returns:
+    #   None
+    ################################################################################
     configtest() {
-        $NGINX -t -c $NGINX_CONF_FILE
+        ${NGINX_SBIN_FILE} -t -c ${NGINX_CONF_FILE}
     }
 
+    ################################################################################
+    # Check the nginx status.
+    # Globals:
+    #   NGINX_PROG_NAME
+    # Arguments:
+    #   None
+    # Returns:
+    #   None
+    ################################################################################
     rh_status() {
-        status $prog
+        status ${NGINX_PROG_NAME}
     }
 
+    ################################################################################
+    # Check the nginx status without any output.
+    # Globals:
+    #   None
+    # Arguments:
+    #   None
+    # Returns:
+    #   None
+    ################################################################################
     rh_status_q() {
         rh_status >/dev/null 2>&1
     }
+
+    # Source function library.
+    . /etc/rc.d/init.d/functions
+
+    # Source networking configuration.
+    . /etc/sysconfig/network
+
+    # Check that networking is up.
+    if [[ "${NETWORKING}" = "no" ]]; then
+        echo "Networking is not available."
+        exit 6
+    fi
+
+    readonly NGINX_SBIN_FILE="/usr/local/nginx/sbin/nginx"
+    readonly NGINX_CONF_FILE="/usr/local/nginx/conf/nginx.conf"
+    readonly NGINX_LOCK_FILE="/var/lock/subsys/nginx"
+    readonly NGINX_PROG_NAME=$(basename ${NGINX_SBIN_FILE})
 
     case "$1" in
         start)
@@ -713,11 +832,8 @@
         status)
             rh_status
             ;;
-        condrestart|try-restart)
-            rh_status_q || exit 0
-            ;;
         *)
-            echo $"Usage: $0 {start|stop|status|restart|condrestart|try-restart|reload|reopen-logs|configtest}"
+            echo "Usage: {start|stop|status|restart|reload|reopen-logs|configtest}"
             exit 2
     esac
     exit $?
@@ -765,72 +881,71 @@
     mkdir -p /data/logs/nginx/
     mkdir -p /data/cron/
 
-部署 nginx 日志切割任务 `crontab -u root -e`
+部署 nginx 日志切割任务 `crontab -u root -e`，每天零时切割日志
 
     00 00 * * * /bin/bash /data/cron/nginx_logs_cut.sh
 
 创建脚本 `vi /data/cron/nginx_logs_cut.sh`
 
     #!/bin/bash
+    #
     #description    cut nginx log files, run at 00:00 everyday
     #crontab        00 00 * * * /bin/bash /data/cron/nginx_logs_cut.sh
     #author         LiCunchang(printf@live.com)
 
     ### PART 1: Move web logs to the backup directory which named by year & month.
 
-    LOGS_PATH=/usr/local/nginx/logs/
-    APP_NAME=(www.licunchang.com mysql.licunchang.com)
-    LOGS_BACKUP=/data/logs/nginx/$(date -d "yesterday" +"%Y%m")/
+    readonly LOGS_PATH="/usr/local/nginx/logs/"
+    readonly APP_NAME=(www.licunchang.com mysql.licunchang.com)
+    readonly LOGS_BACKUP="/data/logs/nginx/$(date -d "yesterday" +"%Y%m")/"
 
-    if [ ! -d $LOGS_BACKUP ]; then
-        mkdir -p $LOGS_BACKUP
+    if [[ ! -d "${LOGS_BACKUP}" ]]; then
+        mkdir -p "${LOGS_BACKUP}"
     fi
 
-    APP_NUM=${#APP_NAME[@]}
+    readonly APP_NUM=${#APP_NAME[@]}
 
-    for ((i=0; i<$APP_NUM; i++)); do
-        if [ -f ${LOGS_PATH}${APP_NAME[i]}.access.log ]; then
+    for ((i=0; i<"${APP_NUM}"; i++)); do
+        if [[ -f ${LOGS_PATH}${APP_NAME[i]}.access.log ]]; then
             mv ${LOGS_PATH}${APP_NAME[i]}.access.log ${LOGS_BACKUP}${APP_NAME[i]}.access_$(date -d "yesterday" +"%Y%m%d%H%M%S").log
         fi
-        if [ -f ${LOGS_PATH}${APP_NAME[i]}.error.log ]; then
+        if [[ -f ${LOGS_PATH}${APP_NAME[i]}.error.log ]]; then
             mv ${LOGS_PATH}${APP_NAME[i]}.error.log ${LOGS_BACKUP}${APP_NAME[i]}.error_$(date -d "yesterday" +"%Y%m%d%H%M%S").log
         fi
     done
 
-    if [ -f ${LOGS_PATH}error.log ]; then
+    if [[ -f ${LOGS_PATH}error.log ]]; then
         mv ${LOGS_PATH}error.log ${LOGS_BACKUP}error_$(date -d "yesterday" +"%Y%m%d%H%M%S").log
     fi
 
-    if [ -f ${LOGS_PATH}access.log ]; then
+    if [[ -f ${LOGS_PATH}access.log ]]; then
         mv ${LOGS_PATH}access.log ${LOGS_BACKUP}access_$(date -d "yesterday" +"%Y%m%d%H%M%S").log
     fi
 
-    chmod 444 $LOGS_BACKUP  -R
+    chmod 444 "${LOGS_BACKUP}"  -R
 
     ### PART 2: make the nginx server reopen a new log files if the nginx is running.
 
     # Source function library.
     . /etc/rc.d/init.d/functions
 
-    NGINX="/usr/local/nginx/sbin/nginx"
-    NGINX_CONF_FILE="/usr/local/nginx/conf/nginx.conf"
-
-    prog=$(basename $NGINX)
-    lockfile=/var/lock/subsys/nginx
+    readonly NGINX="/usr/local/nginx/sbin/nginx"
+    readonly NGINX_CONF_FILE="/usr/local/nginx/conf/nginx.conf"
+    readonly PROG=$(basename "$NGINX")
 
     reopen-logs() {
-        $NGINX -t -c $NGINX_CONF_FILE || return $?
+        ${NGINX} -t -c ${NGINX_CONF_FILE} || return $?
         echo -n $"Re-opening log files: "
         # changing configuration, keeping up with a changed time zone (only for FreeBSD and Linux), 
         # starting new worker processes with a new configuration, graceful shutdown of old worker processes
-        killproc $NGINX -USR1
-        RETVAL=$?
+        killproc ${NGINX} -USR1
+        retval=$?
         echo
-        return $RETVAL
+        return ${retval}
     }
 
     rh_status() {
-        status $prog
+        status ${PROG}
     }
 
     rh_status_q() {
@@ -842,11 +957,11 @@
 
     ### PART 3: remove the old logs to free some disk space.
 
-    cd $LOGS_BACKUP
+    cd ${LOGS_BACKUP}
     cd ..
 
-    LOGS_LIFETIME_MONTHS=12
-    find . -mtime +$(($LOGS_LIFETIME_MONTHS*30)) -exec rm -rf {} \;
+    readonly LOGS_LIFETIME_MONTHS=12
+    find . -mtime +$((${LOGS_LIFETIME_MONTHS}*30)) -exec rm -rf {} \;
 
 ## 5 Memcached
 
