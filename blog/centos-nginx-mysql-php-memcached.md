@@ -866,14 +866,14 @@ pm 这几个选项在 php-fpm.conf 中有详细的功能描述，不清楚的可
     
     echo "<?php echo phpinfo();" > index.php
 
-    chown www.www /data/web/www.licunchang.com  -R
+    chown www:www /data/web/www.licunchang.com  -R
     chmod 744 /data/web/www.licunchang.com  -R
 
     mkdir -p /data/web/mysql.licunchang.com
 
     cd /data/web/mysql.licunchang.com
 
-    chown www.www /data/web/mysql.licunchang.com  -R
+    chown www:www /data/web/mysql.licunchang.com  -R
     chmod 744 /data/web/mysql.licunchang.com  -R
 
 ### 4.7 nginx 日志切割
