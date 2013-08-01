@@ -471,6 +471,8 @@ pm 这几个选项在 php-fpm.conf 中有详细的功能描述，不清楚的可
             index  index.php index.html;
         }
 
+        rewrite ^(.*)/attatchment/(.*)\.php$ /404.html  last;
+
         error_page  404              /404.html;
 
         # redirect server error pages to the static page /50x.html
@@ -491,6 +493,8 @@ pm 这几个选项在 php-fpm.conf 中有详细的功能描述，不清楚的可
         
         location ~ .*\.(gif|jpg|jpeg|png|bmp|swf|js|ico|css)$ {
             expires      360d;
+            add_header Cache-Control no-cache;
+            add_header Cache-Control private;
         }
 
         location ~ /\. {
