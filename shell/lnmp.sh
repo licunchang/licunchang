@@ -374,9 +374,9 @@ php::install() {
                     --enable-sockets \
                     --enable-zip \
                     --with-xmlrpc \
-                    --with-mysql=/usr/local/mysql \
-                    --with-mysqli=/usr/local/mysql/bin/mysql_config \
-                    --with-pdo-mysql=/usr/local/mysql/ \
+                    --with-mysql=mysqlnd \
+                    --with-mysqli=mysqlnd \
+                    --with-pdo-mysql=mysqlnd \
                     --enable-fpm \
                     --with-fpm-user="${php_user}" \
                     --with-fpm-group="${php_group}" \
