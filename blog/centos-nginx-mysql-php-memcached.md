@@ -283,6 +283,7 @@ MySQL 提供了一个脚本在安装初期修改密码的脚本，执行脚本�
 
     cd /usr/local/src
     tar zxvf re2c-0.13.6.tar.gz
+    cd /usr/local/src/re2c-0.13.6
     ./configure
     make
     make install
@@ -297,7 +298,7 @@ MySQL 提供了一个脚本在安装初期修改密码的脚本，执行脚本�
     ./configure --prefix=/usr/local/php --with-config-file-path=/usr/local/php/etc --enable-bcmath --enable-shmop --enable-sysvsem --enable-ftp --with-curl --with-curlwrappers --with-png-dir --with-jpeg-dir --with-freetype-dir --with-gd --enable-gd-native-ttf --enable-mbstring --enable-soap --enable-sockets --enable-zip --with-xmlrpc --with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --enable-fpm --with-fpm-user=www --with-fpm-group=www --with-zlib --with-iconv-dir=/usr/local/libiconv/ --with-pcre-dir=/usr/local/pcre --with-libxml-dir --with-mcrypt=/usr/local/libmcrypt/ --with-mhash=/usr/local/mhash/ --disable-ipv6
 
     make
-    # make test #注意:make test可能有错
+    # make test # 安装前可以使用 make test 做一下测试，发现安装过程中的错误
     make install
 
 ### 3.5 配置 php.ini 及 php-fpm.conf
@@ -337,7 +338,7 @@ pm 这几个选项在 php-fpm.conf 中有详细的功能描述，不清楚的可
 
 同样的，生产环境中不推荐这么做
 
-    cp /usr/local/src/php-5.4.14/sapi/fpm/init.d.php-fpm /etc/rc.d/init.d/php-fpm
+    cp /usr/local/src/php-5.4.17/sapi/fpm/init.d.php-fpm /etc/rc.d/init.d/php-fpm
     chmod 755 /etc/rc.d/init.d/php-fpm
     chkconfig --add php-fpm
     chkconfig --level 35 php-fpm on
@@ -853,7 +854,7 @@ pm 这几个选项在 php-fpm.conf 中有详细的功能描述，不清楚的可
     chkconfig --add nginx 
     chkconfig --level 35 nginx on
 
-    service nginx restart
+    service nginx start
 
 ### 4.6 创建 webroot 目录
 
@@ -971,6 +972,20 @@ pm 这几个选项在 php-fpm.conf 中有详细的功能描述，不清楚的可
 
     readonly LOGS_LIFETIME_MONTHS=12
     find . -mtime +$((${LOGS_LIFETIME_MONTHS}*30)) -exec rm -rf {} \;
+
+### 4.8 配置防火墙
+
+配置防火墙，开启 80 端口
+
+    vi /etc/sysconfig/iptables
+
+把这条规则添加到默认的 22 端口这条规则的下面
+
+    -A INPUT -m state --state NEW -m tcp -p tcp --dport 80 -j ACCEPT
+
+重新启动 iptables 服务
+
+    service iptables restart
 
 ## 5 Memcached
 
