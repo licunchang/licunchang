@@ -49,8 +49,8 @@
 *  nginx-1.4.2.tar.gz
 *  openssl-1.0.1e.tar.gz
 *  pcre-8.33.tar.gz
-*  mysql-5.5.32.tar.gz
-*  php-5.4.17.tar.gz
+*  mysql-5.5.33.tar.gz
+*  php-5.4.19.tar.gz
 *  libiconv-1.14.tar.gz
 *  mcrypt-2.6.8.tar.gz
 *  mhash-0.9.9.9.tar.gz
@@ -86,8 +86,8 @@ MySQL 的 bin-log 是顺序写日志，需要提供较高的顺序写能力，My
 ### 2.3 源码安装
 
     cd /usr/local/src
-    tar zxvf /usr/local/src/mysql-5.5.32.tar.gz
-    cd /usr/local/src/mysql-5.5.32
+    tar zxvf /usr/local/src/mysql-5.5.33.tar.gz
+    cd /usr/local/src/mysql-5.5.33
     cmake . -DCMAKE_INSTALL_PREFIX=/usr/local/mysql -DMYSQL_DATADIR=/data/mysql -DSYSCONFDIR=/etc/mysql -DDEFAULT_CHARSET=utf8 -DDEFAULT_COLLATION=utf8_general_ci -DWITH_EXTRA_CHARSETS=all -DWITH_INNOBASE_STORAGE_ENGINE=1 -DWITH_ARCHIVE_STORAGE_ENGINE=1 -DWITH_BLACKHOLE_STORAGE_ENGINE=1 -DWITH_PERFSCHEMA_STORAGE_ENGINE=1 -DWITHOUT_EXAMPLE_STORAGE_ENGINE=1 -DWITHOUT_FEDERATED_STORAGE_ENGINE=1 -DWITHOUT_PARTITION_STORAGE_ENGINE=1 -DWITH_READLINE=1 -DWITH_LIBWRAP=1 -DENABLED_LOCAL_INFILE=1 -DENABLED_PROFILING=1 -DMYSQL_TCP_PORT=3306 -DWITH_ZLIB=bundled
     make
     make install
@@ -118,7 +118,7 @@ MySQL 的 bin-log 是顺序写日志，需要提供较高的顺序写能力，My
 
 >This is a MySQL example config file for systems with 4GB of memory running mostly MySQL using InnoDB only tables and performing complex queries with few connections.    
 
-    cd /usr/local/src/mysql-5.5.32
+    cd /usr/local/src/mysql-5.5.33
     cp ./support-files/my-medium.cnf /etc/mysql/my.cnf
 
 编辑 my.cnf 文件
@@ -141,9 +141,10 @@ MySQL 的 bin-log 是顺序写日志，需要提供较高的顺序写能力，My
     slow-query-log
     log-queries-not-using-indexes
     innodb_file_per_table
+    expire_logs_days=7
     server-id=1
-    log-bin=master-bin
-    log-bin-index=master-bin.index
+    log-bin=mysql-bin
+    log-bin-index=mysql-bin.index
     
 使用 InnoDB 打开以下选项
 
@@ -289,13 +290,16 @@ MySQL 提供了一个脚本在安装初期修改密码的脚本，执行脚本�
     make install
 
     cd /usr/local/src
-    tar zxvf php-5.4.17.tar.gz
-    cd /usr/local/src/php-5.4.17
-    ./configure --prefix=/usr/local/php --with-config-file-path=/usr/local/php/etc --enable-bcmath --enable-shmop --enable-sysvsem --enable-ftp --with-curl --with-curlwrappers --with-png-dir --with-jpeg-dir --with-freetype-dir --with-gd --enable-gd-native-ttf --enable-mbstring --enable-soap --enable-sockets --enable-zip --with-xmlrpc --with-mysql=/usr/local/mysql --with-mysqli=/usr/local/mysql/bin/mysql_config --with-pdo-mysql=/usr/local/mysql/ --enable-fpm --with-fpm-user=www --with-fpm-group=www --with-zlib --with-iconv-dir=/usr/local/libiconv/ --with-pcre-dir=/usr/local/pcre --with-libxml-dir --with-mcrypt=/usr/local/libmcrypt/ --with-mhash=/usr/local/mhash/ --disable-ipv6
+    tar zxvf php-5.4.19.tar.gz
+    cd /usr/local/src/php-5.4.19
 
-如果使用 mysqlnd 驱动，则使用下面的编译方法（推荐）
+使用 mysqlnd 驱动，则使用下面的编译方法（推荐）
 
     ./configure --prefix=/usr/local/php --with-config-file-path=/usr/local/php/etc --enable-bcmath --enable-shmop --enable-sysvsem --enable-ftp --with-curl --with-curlwrappers --with-png-dir --with-jpeg-dir --with-freetype-dir --with-gd --enable-gd-native-ttf --enable-mbstring --enable-soap --enable-sockets --enable-zip --with-xmlrpc --with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --enable-fpm --with-fpm-user=www --with-fpm-group=www --with-zlib --with-iconv-dir=/usr/local/libiconv/ --with-pcre-dir=/usr/local/pcre --with-libxml-dir --with-mcrypt=/usr/local/libmcrypt/ --with-mhash=/usr/local/mhash/ --disable-ipv6
+
+使用 libmysql 驱动，则使用下面的编译方法
+
+    ./configure --prefix=/usr/local/php --with-config-file-path=/usr/local/php/etc --enable-bcmath --enable-shmop --enable-sysvsem --enable-ftp --with-curl --with-curlwrappers --with-png-dir --with-jpeg-dir --with-freetype-dir --with-gd --enable-gd-native-ttf --enable-mbstring --enable-soap --enable-sockets --enable-zip --with-xmlrpc --with-mysql=/usr/local/mysql --with-mysqli=/usr/local/mysql/bin/mysql_config --with-pdo-mysql=/usr/local/mysql/ --enable-fpm --with-fpm-user=www --with-fpm-group=www --with-zlib --with-iconv-dir=/usr/local/libiconv/ --with-pcre-dir=/usr/local/pcre --with-libxml-dir --with-mcrypt=/usr/local/libmcrypt/ --with-mhash=/usr/local/mhash/ --disable-ipv6
 
     make
     # make test # 安装前可以使用 make test 做一下测试，发现安装过程中的错误
@@ -338,7 +342,7 @@ pm 这几个选项在 php-fpm.conf 中有详细的功能描述，不清楚的可
 
 同样的，生产环境中不推荐这么做
 
-    cp /usr/local/src/php-5.4.17/sapi/fpm/init.d.php-fpm /etc/rc.d/init.d/php-fpm
+    cp /usr/local/src/php-5.4.19/sapi/fpm/init.d.php-fpm /etc/rc.d/init.d/php-fpm
     chmod 755 /etc/rc.d/init.d/php-fpm
     chkconfig --add php-fpm
     chkconfig --level 35 php-fpm on
