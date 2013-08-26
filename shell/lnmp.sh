@@ -208,7 +208,7 @@ expire_logs_days=7' /etc/mysql/my.cnf
     echo "mysql secure"
 
     cd /usr/local/mysql/ || { logger::error "Can't read /usr/local/mysql."; exit 1; }
-    /usr/local/mysql/bin/mysql_secure_installation <<EOF
+    /usr/local/mysql/bin/mysql_secure_installation <<'EOF'
 
 y
 root

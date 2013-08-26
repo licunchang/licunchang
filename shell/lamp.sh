@@ -220,7 +220,7 @@ innodb_file_per_table' /etc/mysql/my.cnf
     /data/scripts/mysql start
     
     cd /usr/local/mysql/
-    /usr/local/mysql/bin/mysql_secure_installation <<EOF
+    /usr/local/mysql/bin/mysql_secure_installation <<'EOF'
 
 y
 root
