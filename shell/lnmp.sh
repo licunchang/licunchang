@@ -231,7 +231,7 @@ EOF
 }
 
 ################################################################################
-# Install php-5.5.19
+# Install php-5.4.19
 # Globals:
 #   None
 # Arguments:
@@ -314,9 +314,9 @@ php::install() {
         fi
     fi
 
-    if [[ -d "/usr/local/src/php-5.5.19" ]]; then
+    if [[ -d "/usr/local/src/php-5.4.19" ]]; then
         echo "install php from source"
-        cd /usr/local/src/php-5.5.19 || { logger::error "Can't read /usr/local/src/php-5.5.19."; exit 1; }
+        cd /usr/local/src/php-5.4.19 || { logger::error "Can't read /usr/local/src/php-5.4.19."; exit 1; }
         ./configure --prefix=/usr/local/php \
                     --with-config-file-path=/usr/local/php/etc \
                     --enable-bcmath \
@@ -351,12 +351,12 @@ php::install() {
         make
         make install
     else
-        logger::error "/usr/local/src/php-5.5.19 was not fonnd"
+        logger::error "/usr/local/src/php-5.4.19 was not fonnd"
         exit 1
     fi
     
     echo "create /etc/php.ini"
-    cp -f /usr/local/src/php-5.5.19/php.ini-production /usr/local/php/etc/php.ini
+    cp -f /usr/local/src/php-5.4.19/php.ini-production /usr/local/php/etc/php.ini
     rm -rf /etc/php.ini
 
     # vi /usr/local/php/etc/php.ini
@@ -409,7 +409,7 @@ php::install() {
     fi
 
     echo "create php init script"
-    cp -f /usr/local/src/php-5.5.19/sapi/fpm/init.d.php-fpm /data/init.d/php-fpm
+    cp -f /usr/local/src/php-5.4.19/sapi/fpm/init.d.php-fpm /data/init.d/php-fpm
     
     chmod 755 /data/init.d/php-fpm
     
@@ -1207,7 +1207,7 @@ main() {
     # 02 openssl-1.0.1e.tar.gz
     # 03 pcre-8.33.tar.gz
     # 04 mysql-5.5.33.tar.gz
-    # 05 php-5.5.19.tar.gz
+    # 05 php-5.4.19.tar.gz
     # 06 libiconv-1.14.tar.gz
     # 07 mcrypt-2.6.8.tar.gz
     # 08 mhash-0.9.9.9.tar.gz
@@ -1221,7 +1221,7 @@ main() {
     PACKAGES[1]="openssl-1.0.1e.tar.gz"
     PACKAGES[2]="pcre-8.33.tar.gz"
     PACKAGES[3]="mysql-5.5.33.tar.gz"
-    PACKAGES[4]="php-5.5.19.tar.gz"
+    PACKAGES[4]="php-5.4.19.tar.gz"
     PACKAGES[5]="libiconv-1.14.tar.gz"
     PACKAGES[6]="mcrypt-2.6.8.tar.gz"
     PACKAGES[7]="mhash-0.9.9.9.tar.gz"
@@ -1314,7 +1314,7 @@ EOF
     fi
 
     #php
-    if [[ -d "/usr/local/src/php-5.5.19" ]]; then
+    if [[ -d "/usr/local/src/php-5.4.19" ]]; then
         echo "php::install"
         php::install
     fi
