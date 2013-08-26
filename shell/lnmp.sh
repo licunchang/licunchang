@@ -1,8 +1,28 @@
 #!/bin/bash
 #
-# description    Install nginx1.4.2 & mysql5.5.32 & php5.4.15 on CentOS6.4
+# description    Install nginx1.4.2 & mysql5.5.33 & php5.4.15 on CentOS6.4
 # author         LiCunchang(printf@live.com)
-# version        2.0.20130602
+# version        2.0.20130810
+
+################################################################################
+# Finds whether a variable is a number or a numeric string.
+# Globals:
+#   None
+# Arguments:
+#   String Or Integer
+# Returns:
+#   None
+################################################################################
+validate::numeric(){
+    case $1 in
+        *[^[:digit:]]*)
+            printf '$foo expanded to a non-digit: %s\n' "$foo" >&2
+            exit 1
+            ;;
+        *)
+            return 0
+    esac
+}
 
 ################################################################################
 # Put error messages to STDERR.
@@ -15,34 +35,8 @@
 ################################################################################
 logger::error() {
     # `date --iso-8601=ns`
-    echo "[error:$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2
+    printf "%s\n" "[error:$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2
     exit 1
-}
-
-################################################################################
-# echo info messages.
-# Globals:
-#   None
-# Arguments:
-#   String
-# Returns:
-#   None
-################################################################################
-logger::info() {
-    echo "[info:$(date +'%Y-%m-%dT%H:%M:%S%z')]: $@" >&2
-}
-
-################################################################################
-# Trap the error message.
-# Globals:
-#   None
-# Arguments:
-#   Integer
-# Returns:
-#   None
-################################################################################
-trap::error() {
-    logger::error "[LINE:$1] Error: Command or function exited with status $?"
 }
 
 ################################################################################
@@ -55,14 +49,14 @@ trap::error() {
 #   None
 ################################################################################
 trap::interrupt() {
-    logger::info ""
-    logger::info "Aborting at [LINE:$1]!"
-    logger::info ""
+    echo ""
+    echo "Aborting at [LINE:$1]!"
+    echo ""
     exit 1
 }
 
 ################################################################################
-# Install mysql-5.5.32
+# Install mysql-5.5.33
 # Globals:
 #   None
 # Arguments:
@@ -72,16 +66,17 @@ trap::interrupt() {
 ################################################################################
 mysql::install() {
 
-    logger::info "install zlib zlib-devel ncurses ncurses-devel bison"
-    # yum install zlib zlib-devel ncurses ncurses-devel bison
+    echo "install zlib zlib-devel ncurses ncurses-devel bison"
     yum -y install zlib zlib-devel ncurses ncurses-devel bison
 
     # Create a mysql User and Group
-    local mysql_group=$(grep '^mysql' /etc/group | awk -F: '{print $1}')
-    local mysql_user=$(grep '^mysql' /etc/passwd | awk -F: '{print $1}')
+    local mysql_group
+    local mysql_user
+    mysql_group=$(grep '^mysql' /etc/group | awk -F: '{print $1}')
+    mysql_user=$(grep '^mysql' /etc/passwd | awk -F: '{print $1}')
 
     if [[ "${mysql_group}" != "mysql" ]]; then
-        logger::info "create group:mysql"
+        echo "create group:mysql"
         /usr/sbin/groupadd -r mysql
         if [[ "$?" -ne 0 ]]; then
             logger::error "can't create a group for mysql"
@@ -92,7 +87,7 @@ mysql::install() {
     fi
 
     if [[ "${mysql_user}" != "mysql" ]]; then
-        logger::info "create user:mysql"
+        echo "create user:mysql"
         /usr/sbin/useradd -g mysql -M -r -s /bin/false mysql
         if [[ "$?" -ne 0 ]]; then
             logger::error "can't create a user for mysql"
@@ -103,17 +98,18 @@ mysql::install() {
     fi
 
     # Create the mysql data directory: /data/mysql
-    logger::info "create mysql data directory"
+    echo "create mysql data directory"
     mkdir -p /data/mysql
     chown -R mysql:mysql /data/mysql
 
     # Create the mysql conf directory: /etc/mysql
+    echo "create mysql conf directory"
     mkdir -p /etc/mysql
     chown -R mysql:mysql /etc/mysql
 
-    if [[ -d "/usr/local/src/mysql-5.5.32" ]]; then
-        logger::info "install mysql from source"
-        cd /usr/local/src/mysql-5.5.32
+    if [[ -d "/usr/local/src/mysql-5.5.33" ]]; then
+        echo "install mysql from source"
+        cd /usr/local/src/mysql-5.5.33 || { echo "Can't read /usr/local/src/mysql-5.5.33."; exit 1; }
         cmake . -DCMAKE_INSTALL_PREFIX=/usr/local/mysql \
                 -DMYSQL_DATADIR=/data/mysql \
                 -DSYSCONFDIR=/etc/mysql \
@@ -131,15 +127,15 @@ mysql::install() {
                 -DENABLED_LOCAL_INFILE=1 \
                 -DENABLED_PROFILING=1 \
                 -DMYSQL_TCP_PORT=3306 \
-                -DWITH_ZLIB=system
+                -DWITH_ZLIB=bundled
         make
         make install
     else
-        logger::error "/usr/local/src/mysql-5.5.32 was not fonnd"
+        logger::error "/usr/local/src/mysql-5.5.33 was not fonnd"
         exit 1
     fi
 
-    logger::info "create the config file"
+    echo "create the config file"
     # Create the config file
     rm -f /etc/my.cnf
     
@@ -147,12 +143,12 @@ mysql::install() {
     local memory_free="$(free -m | grep Mem | awk '{print $4}')"
     
     if [[ "${memory_free}" -le 128 ]]; then
-        cp -f /usr/local/src/mysql-5.5.32/support-files/my-medium.cnf \
+        cp -f /usr/local/src/mysql-5.5.33/support-files/my-medium.cnf \
               /etc/mysql/my.cnf
     fi
     
     if [[ "${memory_free}" -le 512 && "${memory_free}" -gt 128 ]]; then
-        cp -f /usr/local/src/mysql-5.5.32/support-files/my-large.cnf \
+        cp -f /usr/local/src/mysql-5.5.33/support-files/my-large.cnf \
               /etc/mysql/my.cnf
     fi
     
@@ -162,27 +158,14 @@ mysql::install() {
     fi
     
     if [[ "${memory_free}" -gt 4096 ]]; then
-        cp -f /usr/local/src/mysql-5.5.32/support-files/my-innodb-heavy-4G.cnf \
+        cp -f /usr/local/src/mysql-5.5.33/support-files/my-innodb-heavy-4G.cnf \
               /etc/mysql/my.cnf
     fi
     
-    logger::info "optimize mysql"
-    #vi /etc/mysql/my.cnf
-    #[client]
-    #default-character-set=utf8
+    echo "optimize mysql"
+
     sed -i '/^\[client\]/a\default-character-set=utf8' /etc/mysql/my.cnf
-    
-    #[mysqld]
-    #datadir = /data/mysql
-    #character_set_server=utf8
-    #collation-server=utf8_general_ci
-    #skip-character-set-client-handshake
-    #general-log
-    #log-warnings
-    #long_query_time=2
-    #slow-query-log
-    #log-queries-not-using-indexes
-    
+        
     sed -i '/^\[mysqld\]/a\
 datadir = /data/mysql\
 character_set_server=utf8\
@@ -194,21 +177,8 @@ log-warnings\
 long_query_time=2\
 slow-query-log\
 log-queries-not-using-indexes\
-innodb_file_per_table' /etc/mysql/my.cnf
-
-    ## Uncomment the following if you are using InnoDB tables
-    #innodb_data_home_dir = /data/mysql
-    #innodb_data_file_path = ibdata1:10M:autoextend
-    #innodb_log_group_home_dir = /data/mysql
-    ## You can set .._buffer_pool_size up to 50 - 80 %
-    ## of RAM but beware of setting memory usage too high
-    #innodb_buffer_pool_size = 16M
-    #innodb_additional_mem_pool_size = 2M
-    ## Set .._log_file_size to 25 % of buffer pool size
-    #innodb_log_file_size = 5M
-    #innodb_log_buffer_size = 8M
-    #innodb_flush_log_at_trx_commit = 1
-    #innodb_lock_wait_timeout = 50
+innodb_file_per_table\
+expire_logs_days=7' /etc/mysql/my.cnf
     
     sed -i 's/^#innodb_data_home_dir/innodb_data_home_dir/' /etc/mysql/my.cnf
     sed -i 's/^#innodb_data_file_path/innodb_data_file_path/' /etc/mysql/my.cnf
@@ -220,35 +190,24 @@ innodb_file_per_table' /etc/mysql/my.cnf
     sed -i 's/^#innodb_flush_log_at_trx_commit/innodb_flush_log_at_trx_commit/' /etc/mysql/my.cnf
     sed -i 's/^#innodb_lock_wait_timeout/innodb_lock_wait_timeout/' /etc/mysql/my.cnf
     
-    logger::info "install mysql db"
+    echo "install mysql db"
     /usr/local/mysql/scripts/mysql_install_db --user="${mysql_user}" \
                                               --basedir=/usr/local/mysql \
                                               --datadir=/data/mysql
-    
-    #cp -f /usr/local/mysql/support-files/mysql.server /etc/rc.d/init.d/mysql
-    ##vi /etc/rc.d/init.d/mysql
-    ##basedir=/usr/local/mysql
-    ##datadir=/data/mysql
-    #sed -i 's#^basedir=$#basedir=/usr/local/mysql#' /etc/rc.d/init.d/mysql
-    #sed -i 's#^datadir=$#datadir=/data/mysql#' /etc/rc.d/init.d/mysql
-    #chmod 754 /etc/rc.d/init.d/mysql
-    #chkconfig --add mysql
-    #chkconfig --level 35 mysql on
-    #service mysql start
-    
-    logger::info "create mysql init script"
+      
+    echo "create mysql init script"
     mkdir -p /data/init.d/
     cp -f /usr/local/mysql/support-files/mysql.server /data/init.d/mysql
     sed -i 's#^basedir=$#basedir=/usr/local/mysql#' /data/init.d/mysql
     sed -i 's#^datadir=$#datadir=/data/mysql#' /data/init.d/mysql
     chmod 755 /data/init.d/mysql
 
-    logger::info "start mysql"
+    echo "start mysql"
     /data/init.d/mysql start
     
-    logger::info "mysql secure"
-    # TODO
-    cd /usr/local/mysql/
+    echo "mysql secure"
+
+    cd /usr/local/mysql/ || { logger::error "Can't read /usr/local/mysql."; exit 1; }
     /usr/local/mysql/bin/mysql_secure_installation <<EOF
 
 y
@@ -260,19 +219,19 @@ y
 y
 EOF
     
-    logger::info "iptables [port:3306]"
+    echo "iptables [port:3306]"
     #vi /etc/sysconfig/iptables
     sed -i '/^-A INPUT -i lo -j ACCEPT$/a\
 -A INPUT -m state --state NEW -m tcp -p tcp --dport 3306 -j ACCEPT' /etc/sysconfig/iptables
     
     service iptables restart
     
-    logger::info "[done]mysql::install"
+    echo "[done]mysql::install"
     return "$?"
 }
 
 ################################################################################
-# Install php-5.4.17
+# Install php-5.5.19
 # Globals:
 #   None
 # Arguments:
@@ -282,44 +241,44 @@ EOF
 ################################################################################
 php::install() {
 
-    logger::info "install libxml2 libjpeg freetype libpng gd curl fontconfig \
+    echo "install libxml2 libjpeg freetype libpng gd curl fontconfig \
         libxml2-devel curl-devel libjpeg-devel libpng-devel freetype-devel"
     yum -y install libxml2 libjpeg freetype libpng gd curl fontconfig \
         libxml2-devel curl-devel libjpeg-devel libpng-devel freetype-devel
 
-    logger::info "re2c install"
-    cd /usr/local/src/re2c-0.13.6
+    echo "re2c install"
+    cd /usr/local/src/re2c-0.13.6 || { logger::error "Can't read /usr/local/src/re2c-0.13.6."; exit 1; }
     ./configure
     make
     make install
 
-    logger::info "libiconv install"
-    cd /usr/local/src/libiconv-1.14
+    echo "libiconv install"
+    cd /usr/local/src/libiconv-1.14 || { logger::error "Can't read /usr/local/src/libiconv-1.14."; exit 1; }
     ./configure --prefix=/usr/local/libiconv
     make
     libtool --finish /usr/local/libiconv/lib
     make install
     
-    logger::info "libmcrypt install"
-    cd /usr/local/src/libmcrypt-2.5.8
+    echo "libmcrypt install"
+    cd /usr/local/src/libmcrypt-2.5.8 || { logger::error "Can't read /usr/local/src/libmcrypt-2.5.8."; exit 1; }
     ./configure --prefix=/usr/local/libmcrypt
     make
     make install
 
-    logger::info "libmcrypt libltdl install"
-    cd /usr/local/src/libmcrypt-2.5.8/libltdl
+    echo "libmcrypt libltdl install"
+    cd /usr/local/src/libmcrypt-2.5.8/libltdl || { logger::error "Can't read /usr/local/src/libmcrypt-2.5.8/libltdl."; exit 1; }
     ./configure --enable-ltdl-install
     make
     make install
     
-    logger::info "mhash install"
-    cd /usr/local/src/mhash-0.9.9.9
+    echo "mhash install"
+    cd /usr/local/src/mhash-0.9.9.9 || { logger::error "Can't read /usr/local/src/mhash-0.9.9.9."; exit 1; }
     ./configure --prefix=/usr/local/mhash
     make
     make install
     
-    logger::info "mcrypt install"
-    cd /usr/local/src/mcrypt-2.6.8
+    echo "mcrypt install"
+    cd /usr/local/src/mcrypt-2.6.8 || { logger::error "Can't read /usr/local/src/mcrypt-2.6.8."; exit 1; }
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/libmcrypt/lib:/usr/local/mhash/lib
     export LDFLAGS="-L/usr/local/mhash/lib/ -I/usr/local/mhash/include/"
     export CFLAGS="-I/usr/local/mhash/include/"
@@ -328,11 +287,13 @@ php::install() {
     make install
 
     # Create a PHP User and Group
-    local php_group=$(grep '^www' /etc/group | awk -F: '{print $1}')
-    local php_user=$(grep '^www' /etc/passwd | awk -F: '{print $1}')
+    local php_group
+    local php_user
+    php_group=$(grep '^www' /etc/group | awk -F: '{print $1}')
+    php_user=$(grep '^www' /etc/passwd | awk -F: '{print $1}')
 
     if [[ "${php_group}" != "www" ]]; then
-        logger::info "create group:www"
+        echo "create group:www"
         /usr/sbin/groupadd -r www
         if [[ "$?" -ne 0 ]]; then
             logger::error "can't create a group for php-fpm"
@@ -343,7 +304,7 @@ php::install() {
     fi
 
     if [[ "${php_user}" != "www" ]]; then
-        logger::info "create user:www"
+        echo "create user:www"
         /usr/sbin/useradd -g www -M -r -s /bin/false www
         if [[ "$?" -ne 0 ]]; then
             logger::error "can't create a user for php-fpm"
@@ -353,9 +314,9 @@ php::install() {
         fi
     fi
 
-    if [[ -d "/usr/local/src/php-5.4.17" ]]; then
-        logger::info "install php from source"
-        cd /usr/local/src/php-5.4.17
+    if [[ -d "/usr/local/src/php-5.5.19" ]]; then
+        echo "install php from source"
+        cd /usr/local/src/php-5.5.19 || { logger::error "Can't read /usr/local/src/php-5.5.19."; exit 1; }
         ./configure --prefix=/usr/local/php \
                     --with-config-file-path=/usr/local/php/etc \
                     --enable-bcmath \
@@ -390,16 +351,16 @@ php::install() {
         make
         make install
     else
-        logger::error "/usr/local/src/php-5.4.17 was not fonnd"
+        logger::error "/usr/local/src/php-5.5.19 was not fonnd"
         exit 1
     fi
     
-    logger::info "create /etc/php.ini"
-    cp -f /usr/local/src/php-5.4.17/php.ini-production /usr/local/php/etc/php.ini
+    echo "create /etc/php.ini"
+    cp -f /usr/local/src/php-5.5.19/php.ini-production /usr/local/php/etc/php.ini
     rm -rf /etc/php.ini
 
     # vi /usr/local/php/etc/php.ini
-    logger::info "optimize php"
+    echo "optimize php"
     sed -i 's#^;date.timezone =#date.timezone = Asia/Shanghai#' /usr/local/php/etc/php.ini
     sed -i 's#^expose_php = On#expose_php = Off#' /usr/local/php/etc/php.ini
     sed -i 's#^session.name = PHPSESSID#session.name = JSESSIONID#' /usr/local/php/etc/php.ini
@@ -447,69 +408,15 @@ php::install() {
         sed -i 's/^;pm.max_requests = 500$/pm.max_requests = 5000/' /usr/local/php/etc/php-fpm.conf
     fi
 
-    #php-fpm
-    
-    # Choose how the process manager will control the number of child processes.
-    # Possible Values:
-    #   static  - a fixed number (pm.max_children) of child processes#
-    #   dynamic - the number of child processes are set dynamically based on the
-    #             following directives. With this process management, there will be
-    #             always at least 1 children.
-    #             pm.max_children      - the maximum number of children that can
-    #                                    be alive at the same time.
-    #             pm.start_servers     - the number of children created on startup.
-    #             pm.min_spare_servers - the minimum number of children in 'idle'
-    #                                    state (waiting to process). If the number
-    #                                    of 'idle' processes is less than this
-    #                                    number then some children will be created.
-    #             pm.max_spare_servers - the maximum number of children in 'idle'
-    #                                    state (waiting to process). If the number
-    #                                    of 'idle' processes is greater than this
-    #                                    number then some children will be killed.
-    #  ondemand - no children are created at startup. Children will be forked when
-    #             new requests will connect. The following parameter are used:
-    #             pm.max_children           - the maximum number of children that
-    #                                         can be alive at the same time.
-    #             pm.process_idle_timeout   - The number of seconds after which
-    #                                         an idle process will be killed.
-    # Note: This value is mandatory.
-    # pm = dynamic
-    
-    # The number of child processes to be created when pm is set to 'static' and the
-    # maximum number of child processes when pm is set to 'dynamic' or 'ondemand'.
-    # This value sets the limit on the number of simultaneous requests that will be
-    # served. Equivalent to the ApacheMaxClients directive with mpm_prefork.
-    # Equivalent to the PHP_FCGI_CHILDREN environment variable in the original PHP
-    # CGI. The below defaults are based on a server without much resources. Don't
-    # forget to tweak pm.* to fit your needs.
-    # Note: Used when pm is set to 'static', 'dynamic' or 'ondemand'
-    # Note: This value is mandatory.
-    # pm.max_children = 5
-    
-    # The number of child processes created on startup.
-    # Note: Used only when pm is set to 'dynamic'
-    # Default Value: min_spare_servers + (max_spare_servers - min_spare_servers) / 2
-    # pm.start_servers = 2
-
-    # The desired minimum number of idle server processes.
-    # Note: Used only when pm is set to 'dynamic'
-    # Note: Mandatory when pm is set to 'dynamic'
-    # pm.min_spare_servers = 1
-
-    # The desired maximum number of idle server processes.
-    # Note: Used only when pm is set to 'dynamic'
-    # Note: Mandatory when pm is set to 'dynamic'
-    # pm.max_spare_servers = 3
-
-    logger::info "create php init script"
-    cp -f /usr/local/src/php-5.4.17/sapi/fpm/init.d.php-fpm /data/init.d/php-fpm
+    echo "create php init script"
+    cp -f /usr/local/src/php-5.5.19/sapi/fpm/init.d.php-fpm /data/init.d/php-fpm
     
     chmod 755 /data/init.d/php-fpm
     
-    logger::info "start php-fpm"
+    echo "start php-fpm"
     /data/init.d/php-fpm start
     
-    logger::info "[done]php::install"
+    echo "[done]php::install"
     return "$?"
 }
 
@@ -525,11 +432,13 @@ php::install() {
 nginx::install() {
 
     # Create a Nginx User and Group
-    local nginx_group=$(grep '^www' /etc/group | awk -F: '{print $1}')
-    local nginx_user=$(grep '^www' /etc/passwd | awk -F: '{print $1}')
+    local nginx_group
+    local nginx_user
+    nginx_group=$(grep '^www' /etc/group | awk -F: '{print $1}')
+    nginx_user=$(grep '^www' /etc/passwd | awk -F: '{print $1}')
 
     if [[ "${nginx_group}" != "www" ]]; then
-        logger::info "create group:www"
+        echo "create group:www"
         /usr/sbin/groupadd -r www
         if [[ "$?" -ne 0 ]]; then
             logger::error "can't create a group for nginx"
@@ -540,7 +449,7 @@ nginx::install() {
     fi
 
     if [[ "${nginx_user}" != "www" ]]; then
-        logger::info "create user:www"
+        echo "create user:www"
         /usr/sbin/useradd -g www -M -r -s /bin/false www
         if [[ "$?" -ne 0 ]]; then
             logger::error "can't create a user for nginx"
@@ -551,8 +460,8 @@ nginx::install() {
     fi
     
     if [[ -d "/usr/local/src/pcre-8.33" ]]; then
-        logger::info "install pcre from source"
-        cd /usr/local/src/pcre-8.33
+        echo "install pcre from source"
+        cd /usr/local/src/pcre-8.33 || { logger::error "Can't read /usr/local/src/pcre-8.33."; exit 1; }
         ./configure --prefix=/usr/local/pcre \
                     --enable-utf \
                     --enable-pcre16 \
@@ -567,8 +476,8 @@ nginx::install() {
     fi
     
     if [[ -d "/usr/local/src/nginx-1.4.2" ]]; then
-        logger::info "install nginx from source"
-        cd /usr/local/src/nginx-1.4.2
+        echo "install nginx from source"
+        cd /usr/local/src/nginx-1.4.2 || { logger::error "Can't read /usr/local/src/nginx-1.4.2."; exit 1; }
         
         sed -i 's/nginx\b/Microsoft-IIS/g' ./src/core/nginx.h
         sed -i 's/1.4.2/7.5/' ./src/core/nginx.h
@@ -592,7 +501,7 @@ nginx::install() {
         exit 1
     fi
 
-    logger::info "optimize nginx config"
+    echo "optimize nginx config"
 
     # CPU core number
     local cpu_core_number="$(more /proc/cpuinfo | grep "model name" | wc -l)"
@@ -680,7 +589,7 @@ http {
 }
 EOF
 
-    logger::info "add server[www.licunchang.com] nginx config"
+    echo "add server[www.licunchang.com] nginx config"
     mkdir -p /usr/local/nginx/conf/servers/
     
     cat > /usr/local/nginx/conf/servers/www.licunchang.com.conf <<'EOF'
@@ -735,7 +644,7 @@ server {
 }
 EOF
 
-    logger::info "add server[mysql.licunchang.com] nginx config"
+    echo "add server[mysql.licunchang.com] nginx config"
     cat > /usr/local/nginx/conf/servers/mysql.licunchang.com.conf <<'EOF'
 server {
     listen       80;
@@ -789,7 +698,7 @@ server {
 }
 EOF
 
-    logger::info "add server[status.licunchang.com] nginx config"
+    echo "add server[status.licunchang.com] nginx config"
     cat > /usr/local/nginx/conf/servers/status.licunchang.com.conf <<'EOF'
 server {
     listen  80;
@@ -813,7 +722,7 @@ EOF
     mkdir -p /data/web/www.licunchang.com
     mkdir -p /data/web/mysql.licunchang.com
 
-    cd /data/web/www.licunchang.com
+    cd /data/web/www.licunchang.com || { logger::error "Can't read /data/web/www.licunchang.com."; exit 1; }
     touch favicon.ico
 
     echo "404 Not Found" > 404.html
@@ -828,10 +737,10 @@ EOF
     
     echo "<?php echo phpinfo();" > index.php
 
-    chown www.www /data/web/www.licunchang.com  -R
+    chown www:www /data/web/www.licunchang.com  -R
     chmod 744 /data/web/www.licunchang.com  -R
 
-    cd /data/web/mysql.licunchang.com
+    cd /data/web/mysql.licunchang.com || { logger::error "Can't read /data/web/mysql.licunchang.com."; exit 1; }
     touch favicon.ico
 
     echo "404 Not Found" > 404.html
@@ -844,10 +753,10 @@ EOF
     echo "504 Gateway Timeout" > 504.html
     echo "505 HTTP Version Not Supported" > 505.html
     
-    chown www.www /data/web/mysql.licunchang.com  -R
+    chown www:www /data/web/mysql.licunchang.com  -R
     chmod 744 /data/web/mysql.licunchang.com  -R
 
-    logger::info "add nginx init script"
+    echo "add nginx init script"
     cat > /data/init.d/nginx <<'EOF'
 #!/bin/bash
 #
@@ -1102,49 +1011,17 @@ esac
 exit $?
 EOF
 
-    logger::info "start nginx"
+    echo "start nginx"
     chmod 755 /data/init.d/nginx
     /data/init.d/nginx start
     
-    logger::info "iptables:80"
+    echo "iptables:80"
     sed -i '/^-A INPUT -i lo -j ACCEPT$/a\
 -A INPUT -m state --state NEW -m tcp -p tcp --dport 80 -j ACCEPT' /etc/sysconfig/iptables
     
     service iptables restart
-    
-    # max_clients = worker_processes * worker_connections
-    
-    # Worker Connections
-    # Personally I stick with 1024 worker connections, because I don¡¯t have any reason to raise this value. But if example 4096 connections per second is not enough then it¡¯s possible to try to double this and set 2048 connections per process.
-    # worker_processes final setup could be following:
-    # worker_connections 1024;
-    
-    # If you want to allow users upload something or upload personally something over the HTTP then you should maybe increase post size. It can be done with client_max_body_size value which goes under http/server/location section. On default it¡¯s 1 Mb, but it can be set example to 20 Mb and also increase buffer size with following configuration:
-    # client_max_body_size 20m;
-    # client_body_buffer_size 128k;
-    
-    # location ~* \.(jpg|jpeg|gif|png|css|js|ico|xml)$ {
-        # access_log        off;
-        # log_not_found     off;
-        # expires           360d;
-    # }
-    # Pass PHP scripts to PHP-FPM
-    # location ~* \.php$ {
-        # fastcgi_index   index.php;
-        # fastcgi_pass    127.0.0.1:9000;
-        # # fastcgi_pass   unix:/var/run/php-fpm/php-fpm.sock;
-        # include         fastcgi_params;
-        # fastcgi_param   SCRIPT_FILENAME    $document_root$fastcgi_script_name;
-        # fastcgi_param   SCRIPT_NAME        $fastcgi_script_name;
-    # }
-    # It¡¯s very common that server root or other public directories have hidden files, which starts with dot (.) and normally those is not intended to site users. Public directories can contain version control files and directories, like .svn, some IDE properties files and .htaccess files. Following deny access and turn off logging for all hidden files.
-    # location ~ /\. {
-        # access_log off;
-        # log_not_found off; 
-        # deny all;
-    # }
-    
-    logger::info "crontab:nginx_logs_cut"
+     
+    echo "crontab:nginx_logs_cut"
     mkdir -p /data/logs/nginx/
     mkdir -p /data/cron/
     cat > /data/cron/nginx_logs_cut.sh <<'EOF'
@@ -1241,9 +1118,9 @@ EOF
 ################################################################################
 xdebug::install() {
 
-    cd /usr/local/src/
-    tar -xzf xdebug-2.2.2.tgz
-    cd /usr/local/src/xdebug-2.2.2/
+    cd /usr/local/src/ || { logger::error "Can't read /usr/local/src."; exit 1; }
+    tar -xzf xdebug-2.2.3.tgz
+    cd /usr/local/src/xdebug-2.2.3/ || { logger::error "Can't read /usr/local/src/xdebug-2.2.3/."; exit 1; }
     /usr/local/php/bin/phpize
     ./configure --enable-xdebug --with-php-config=/usr/local/php/bin/php-config
     make
@@ -1281,15 +1158,9 @@ xtrabackup::install() {
     yum -y install cmake gcc gcc-c++ patch libaio libaio-devel automake \
         autoconf bzr bison libtool ncurses-devel zlib-devel perl-Time-HiRes
 
-    cd /usr/local/src/
+    cd /usr/local/src/ || { logger::error "Can't read /usr/local/src."; exit 1; }
 
-    if [[ ! -f "/usr/local/src/mysql-5.5.17.tar.gz" ]]; then
-        echo "error:miss mysql-5.5.17.tar.gz"
-        exit 1
-    fi
-
-    cp /usr/local/src/mysql-5.5.17.tar.gz /usr/local/src/percona-xtrabackup-2.0.6
-    cd /usr/local/src/percona-xtrabackup-2.0.6
+    cd /usr/local/src/percona-xtrabackup-2.1.3 || { logger::error "Can't read /usr/local/src/percona-xtrabackup-2.1.3/."; exit 1; }
     ./utils/build.sh innodb55
 
     mkdir -p /usr/local/xtrabackup
@@ -1299,25 +1170,11 @@ xtrabackup::install() {
     ln -s /usr/local/xtrabackup/xtrabackup_innodb55 /usr/local/xtrabackup/xtrabackup_55
     cp ./src/xbstream /usr/local/xtrabackup/
 
-    /usr/local/mysql/bin/mysql -uroot -proot -P3306 <<'EOF'
-CREATE USER 'xtrabackup'@'localhost' IDENTIFIED BY 'xtrabackup';
-GRANT RELOAD, LOCK TABLES, REPLICATION CLIENT ON *.* TO 'xtrabackup'@'localhost';
-FLUSH PRIVILEGES;
-EOF
-
-    mkdir -p /data/cron/
-    cat > /data/cron/mysql_xtrabackup.sh <<'EOF'
-#!/bin/bash
-#description    backup mysql data files, run at 0:00 everyday
-#crontab        00 00 * * * /bin/bash /data/cron/nginx_logs_cut.sh
-#author         LiCunchang(printf@live.com)
-
-EOF
     return $?
 }
 
 ################################################################################
-# Put error messages to STDERR.
+# The Main Function
 # Globals:
 #   None
 # Arguments:
@@ -1327,33 +1184,30 @@ EOF
 ################################################################################
 main() {
 
-    INSTALL_LOG="${HOME}/install_lnmp.log"
-    exec 1>${INSTALL_LOG}
     export PS4='+$LINENO:{${FUNCNAME[0]}} '
     trap 'trap::interrupt $LINENO' 1 2 3 6 15
-    trap 'trap::error $LINENO' ERR
 
-    logger::info "┌─────────────────────────────────────────────────────────────────┐"
-    logger::info "│       #####      #####       ##   #####      ###     ########   │"
-    logger::info "│      ##  ##     ## ###      ##   ## ####    ####    ##  ##   #  │"
-    logger::info "│     ###  ##    ##  ####    ##   ##  ####    ###    ##  ###   #  │"
-    logger::info "│     ##         ##  ####    ##   ##  ####   ####   ###  ###   #  │"
-    logger::info "│     ##        ##   #####  ###  ##   ####  #####   ##   ###  ##  │"
-    logger::info "│    ###             ## ### ##        ##### #####        ### ##   │"
-    logger::info "│    ###            ### ### ##       ######## ###       ######    │"
-    logger::info "│    ###            ##   #####       ## ####  ##        ###       │"
-    logger::info "│    ##             ##   #####       ##  ###  ##        ###       │"
-    logger::info "│   ###            ##     ####      ##   ##  ###        ##        │"
-    logger::info "│   ##     ## ###  ##      ##  ###  ##       ###       ##         │"
-    logger::info "│ ##########   #####       ##   #####        #####   ######       │"
-    logger::info "└─────────────────────────────────────────────────────────────────┘"
-    logger::info ""
+    echo "┌─────────────────────────────────────────────────────────────────┐"
+    echo "│       #####      #####       ##   #####      ###     ########   │"
+    echo "│      ##  ##     ## ###      ##   ## ####    ####    ##  ##   #  │"
+    echo "│     ###  ##    ##  ####    ##   ##  ####    ###    ##  ###   #  │"
+    echo "│     ##         ##  ####    ##   ##  ####   ####   ###  ###   #  │"
+    echo "│     ##        ##   #####  ###  ##   ####  #####   ##   ###  ##  │"
+    echo "│    ###             ## ### ##        ##### #####        ### ##   │"
+    echo "│    ###            ### ### ##       ######## ###       ######    │"
+    echo "│    ###            ##   #####       ## ####  ##        ###       │"
+    echo "│    ##             ##   #####       ##  ###  ##        ###       │"
+    echo "│   ###            ##     ####      ##   ##  ###        ##        │"
+    echo "│   ##     ## ###  ##      ##  ###  ##       ###       ##         │"
+    echo "│ ##########   #####       ##   #####        #####   ######       │"
+    echo "└─────────────────────────────────────────────────────────────────┘"
+    echo ""
 
     # 01 nginx-1.4.2.tar.gz
     # 02 openssl-1.0.1e.tar.gz
     # 03 pcre-8.33.tar.gz
-    # 04 mysql-5.5.32.tar.gz
-    # 05 php-5.4.17.tar.gz
+    # 04 mysql-5.5.33.tar.gz
+    # 05 php-5.5.19.tar.gz
     # 06 libiconv-1.14.tar.gz
     # 07 mcrypt-2.6.8.tar.gz
     # 08 mhash-0.9.9.9.tar.gz
@@ -1366,8 +1220,8 @@ main() {
     PACKAGES[0]="nginx-1.4.2.tar.gz"
     PACKAGES[1]="openssl-1.0.1e.tar.gz"
     PACKAGES[2]="pcre-8.33.tar.gz"
-    PACKAGES[3]="mysql-5.5.32.tar.gz"
-    PACKAGES[4]="php-5.4.17.tar.gz"
+    PACKAGES[3]="mysql-5.5.33.tar.gz"
+    PACKAGES[4]="php-5.5.19.tar.gz"
     PACKAGES[5]="libiconv-1.14.tar.gz"
     PACKAGES[6]="mcrypt-2.6.8.tar.gz"
     PACKAGES[7]="mhash-0.9.9.9.tar.gz"
@@ -1376,23 +1230,11 @@ main() {
 
     readonly PACKAGES
 
-    # cd /usr/local/src
-    # # unzip the packages
-    # ls | grep -i '.tar.gz$' > tar.list
-    # if [[ `cat tar.list | wc -l` -ne 0 ]]; then
-    #     for TAR in `cat tar.list`
-    #     do
-    #         echo "unzip the package: $TAR"
-    #         tar zxf $TAR
-    #     done
-    # fi
-    # rm -f tar.list
-
-    cd /usr/local/src
+    cd /usr/local/src || { logger::error "Can't read /usr/local/src."; exit 1; }
     for package in ${PACKAGES[@]}; do
         if [[ -f "${package}" ]]; then
-            logger::info "unzip ${package}"
-            tar zxf "${package}"
+            echo "unzip ${package}"
+            tar zxf "${package}" || { logger::error "tar:${package}"; exit 1; }
         else
             logger::error "/usr/local/src/${package} was not found."
             exit 1
@@ -1423,7 +1265,7 @@ main() {
         logger::error "network is not available."
         exit 1
     else
-        logger::info "network is working."
+        echo "network is working."
     fi
 
     readonly CDROM_MOUNT_DIR="/mnt/cdrom"
@@ -1435,23 +1277,23 @@ main() {
     fi
 
     if [[ -z "$(ls -A "${CDROM_MOUNT_DIR}")" ]]; then
-        logger::info "mount cdrom."
+        echo "mount cdrom."
         mount /dev/cdrom "${CDROM_MOUNT_DIR}"
         if [[ "$?" -ne 0 ]]; then
-            logger::error "can't create a directory as a mount point"
+            logger::error "can't mount the cdrom"
             exit 1
         fi
     fi
 
-    cd /etc/yum.repos.d
-    logger::info "backup yum sources"
-    for repo in $(ls | grep -i '.repo$'); do
-        if [[ -n "${repo}" ]]; then
+    cd /etc/yum.repos.d || { logger::error "/etc/yum.repos.d"; exit 1; }
+    echo "backup yum sources"
+    for repo in ./*.repo; do
+        if [[ -e "${repo}" ]]; then
             mv "${repo}" "${repo}_licunchang.bak"
         fi
     done
 
-    logger::info "create dvd yum sources"
+    echo "create dvd yum sources"
     touch CentOS-Dvd.repo
 
     cat > CentOS-Dvd.repo <<'EOF'
@@ -1462,41 +1304,38 @@ gpgcheck=0
 enabled=1
 EOF
 
-    yum makecache
-
-    logger::info "install make cmake gcc gcc-c++ chkconfig automake autoconf libtool"
+    echo "install make cmake gcc gcc-c++ chkconfig automake autoconf libtool"
     yum -y install make cmake gcc gcc-c++ chkconfig automake autoconf libtool
 
     #MySQL
-    if [ -d "/usr/local/src/mysql-5.5.32" ]; then
-        logger::info "mysql::install"
+    if [[ -d "/usr/local/src/mysql-5.5.33" ]]; then
+        echo "mysql::install"
         mysql::install
     fi
 
     #php
-    if [ -d "/usr/local/src/php-5.4.17" ]; then
-        logger::info "php::install"
+    if [[ -d "/usr/local/src/php-5.5.19" ]]; then
+        echo "php::install"
         php::install
     fi
 
     #nginx
-    if [ -d "/usr/local/src/nginx-1.4.2" ]; then
-        logger::info "nginx::install"
+    if [[ -d "/usr/local/src/nginx-1.4.2" ]]; then
+        echo "nginx::install"
         nginx::install
     fi
 
     #xdebug
-    if [ -f "/usr/local/src/xdebug-2.2.3.tgz" ]; then
-        logger::info "xdebug::install"
+    if [[ -f "/usr/local/src/xdebug-2.2.3.tgz" ]]; then
+        echo "xdebug::install"
         xdebug::install
     fi
 
     #xtrabackup
-    if [ -d "/usr/local/src/percona-xtrabackup-2.1.3" ]; then
-        logger::info "xtrabackup::install"
+    if [[ -d "/usr/local/src/percona-xtrabackup-2.1.4" ]]; then
+        echo "xtrabackup::install"
         xtrabackup::install
     fi
-
 }
 
 main "$@"
