@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# description    Install nginx1.4.2 & mysql5.5.33 & php5.4.15 on CentOS6.4
+# description    Install nginx1.4.2 & mysql5.5.33 & php5.4.19 on CentOS6.4
 # author         LiCunchang(printf@live.com)
 # version        2.0.20130810
 
@@ -153,7 +153,7 @@ mysql::install() {
     fi
     
     if [[ "${memory_free}" -le 4096 && "${memory_free}" -gt 512 ]]; then
-        cp -f /usr/local/src/mysql-5.5.17/support-files/my-huge.cnf \
+        cp -f /usr/local/src/mysql-5.5.33/support-files/my-huge.cnf \
               /etc/mysql/my.cnf
     fi
     
@@ -1145,7 +1145,7 @@ xdebug.auto_profile=1\
 }
 
 ################################################################################
-# Install xtrabackup-2.1.3
+# Install xtrabackup-2.1.4
 # Globals:
 #   None
 # Arguments:
@@ -1155,12 +1155,13 @@ xdebug.auto_profile=1\
 ################################################################################
 xtrabackup::install() {
 
-    yum -y install cmake gcc gcc-c++ patch libaio libaio-devel automake \
-        autoconf bzr bison libtool ncurses-devel zlib-devel perl-Time-HiRes
-
     cd /usr/local/src/ || { logger::error "Can't read /usr/local/src."; exit 1; }
+    tar -xzf percona-xtrabackup-2.1.4.tar.gz
+    cd /usr/local/src/percona-xtrabackup-2.1.4/ || { logger::error "Can't read /usr/local/src/percona-xtrabackup-2.1.4/."; exit 1; }
 
-    cd /usr/local/src/percona-xtrabackup-2.1.3 || { logger::error "Can't read /usr/local/src/percona-xtrabackup-2.1.3/."; exit 1; }
+    yum -y install cmake gcc gcc-c++ patch libaio libaio-devel automake \
+        autoconf bzr bison libtool ncurses-devel zlib-devel perl-Time-HiRes libgcrypt-devel
+
     ./utils/build.sh innodb55
 
     mkdir -p /usr/local/xtrabackup
@@ -1214,7 +1215,7 @@ main() {
     # 09 libmcrypt-2.5.8.tar.gz
     # 10 re2c-0.13.6.tar.gz
     # 11 xdebug-2.2.3.tgz
-    # 12 percona-xtrabackup-2.1.3.tar.gz
+    # 12 percona-xtrabackup-2.1.4.tar.gz
     # 13 * mysql-5.5.17.tar.gz(for xtrabackup)
 
     PACKAGES[0]="nginx-1.4.2.tar.gz"
@@ -1332,7 +1333,7 @@ EOF
     fi
 
     #xtrabackup
-    if [[ -d "/usr/local/src/percona-xtrabackup-2.1.4" ]]; then
+    if [[ -f "/usr/local/src/percona-xtrabackup-2.1.4.tar.gz" ]]; then
         echo "xtrabackup::install"
         xtrabackup::install
     fi
