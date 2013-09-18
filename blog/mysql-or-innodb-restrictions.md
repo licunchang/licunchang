@@ -24,6 +24,8 @@
 * InnoDB 表空间最小默认10MB，最大是数据页大小的40亿倍，也就是 64TB 这也是单表最大值。
 * InnoDB 中默认的数据库页大小是 16KB 。不建议更改数据库页的大小
 
+to be continued.
+
 ## References
 
 1. Limits on Table Column Count and Row Size, [http://dev.mysql.com/doc/refman/5.5/en/column-count-limit.html](http://dev.mysql.com/doc/refman/5.5/en/column-count-limit.html "Limits on Table Column Count and Row Size")

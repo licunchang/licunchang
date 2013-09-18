@@ -67,13 +67,7 @@ Examples 3 如果客户端 request_method 为 `POST`，则返回 405
         return 405;
     }
 
-Examples 4 ??
-
-    if ($slow) {
-        limit_rate 10k;
-    }
-
-Examples 5 防止盗链
+Examples 4 防止盗链
 
     valid_referers none blocked server_names *.example.com;
     if ($invalid_referer) {
@@ -91,6 +85,8 @@ Examples 5 防止盗链
     if (condition_1 && condition_2) {
         # 不支持多条件判断
     }
+
+另外，在 `location` 中使用 `if` 会有很多问题，很多情况下它的执行结果并不是你期望的那样，有些情况下甚至无法通过配置测试，或许最好的办法就是避免使用 `if`。
 
 ### 2.3 return
 
@@ -262,3 +258,5 @@ ngx\_http\_rewrite\_module 模块的指令在解析配置阶段被编译成 ngin
 2. ngx\_http\_rewrite\_module模块 [http://nginx.org/cn/docs/http/ngx\_http\_rewrite\_module.html](http://nginx.org/cn/docs/http/ngx_http_rewrite_module.html "ngx_http_rewrite_module模块")
 3. Nginx Rewrite研究笔记 [http://blog.cafeneko.info/2010/10/nginx\_rewrite\_note](http://blog.cafeneko.info/2010/10/nginx_rewrite_note/ "Nginx Rewrite研究笔记") 
 4. HttpCoreModule [http://wiki.nginx.org/HttpCoreModule](http://wiki.nginx.org/HttpCoreModule "HttpCoreModule") 
+5. IfIsEvil [http://wiki.nginx.org/IfIsEvil](http://wiki.nginx.org/IfIsEvil "IfIsEvil") 
+6. How nginx "location if" works [http://agentzh.blogspot.com/2011/03/how-nginx-location-if-works.html](http://agentzh.blogspot.com/2011/03/how-nginx-location-if-works.html "How nginx "location if" works")

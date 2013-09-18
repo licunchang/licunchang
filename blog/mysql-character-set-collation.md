@@ -252,8 +252,6 @@ Column 的 character set 和 collation 的设定规则如下：
 
 除以上以外，我们还可以对字符串（String Literal）设置 character set 和 collation。
 
-**binary string**是一种没有 character set 和 collation 的由字节组成的字符，**nonbinary string** 是一种定义了 character set 和 collation 的字符。
-
 字符串可以使用 **introducer** 来指定 character set 同时使用 `COLLATE` 来指定 collation。
 
     [_charset_name]'string' [COLLATE collation_name]
@@ -266,154 +264,21 @@ Column 的 character set 和 collation 的设定规则如下：
 
 例子中的第一条，`SELECT 'string'` 中的字符串使用 `character_set_connection` 和 `collation_connection` 定义的 character set 和 collation 。
 
-类似于 `_charset_name` 表达方式我们叫做 **introducer**，它告诉解析器接下来的字符串使用 character set X 来处理，
+类似于 `_charset_name` 表达方式我们叫做 **introducer**，它告诉解析器接下来的字符串使用 character set X 来处理，这种表示方法并不像 `CONVERT()` 函数那样改变 **introducer** 内的字符串的 character set ，他没有改变字符串的值，同时，**introducer** 在十六进制形式和数字形式前面都是合法的，或者在位字节之前。
 
+    SELECT _latin1 x'AABBCC';
+    SELECT _latin1 0xAABBCC;
+    SELECT _latin1 b'1100011';
+    SELECT _latin1 0b1100011;
 
+这种情况下，如果只指定了 character set ，则使用相对应的 collation，如果 character set 没指定，则使用 `character_set_connection` 和 `collation_connection`。
 
-
-
-
-## Connection Character Sets and Collations
-
-
-在一个客户端和服务器的连接中有很多的 character set 和 collation 的变量，有很多在前面的已经提到过
-
-还有很多其他的变量在一个客户端和服务器的交互中被使用，每一个客户端都有一个与连接相关的 character set 和 collation 系统变量，这里的连接是你连接到服务器时建立的那个东西，客户端通过连接发送 SQL 表达式，例如一个查询到服务器，服务器通过连接返回给相应给客户端，例如结果集或者错误信息，这导致了很多连接过程中的character set 和 collation的问题，这些问题都能通过一系列的系统变量来解决
-
-哪一种 character set 和 collation 是表达式离开客户端时使用的呢？
-
- 服务器接到表达式之后用哪种 character set 转换  
-
- 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+to be continued.
 
 ## See also
 
 *  Character Set Support [http://dev.mysql.com/doc/refman/5.5/en/charset.html](http://dev.mysql.com/doc/refman/5.5/en/charset.html "Character Set Support")
 *  Collation-Charts.ORG [http://collation-charts.org/](http://collation-charts.org/ "Collation-Charts.ORG")
-
 
 ## References
 
@@ -423,7 +288,6 @@ Column 的 character set 和 collation 的设定规则如下：
 4. MySQL Data Methods, [http://www.webreference.com/programming/mysql_data/4.html](http://www.webreference.com/programming/mysql_data/4.html)
 5. String Literals, [http://dev.mysql.com/doc/refman/5.5/en/string-literals.html](http://dev.mysql.com/doc/refman/5.5/en/string-literals.html)
 6. Expression Evaluation and Type Conversion, [http://82.157.70.109/mirrorbooks/mysqlguide4.1-5.0/0672326736/ch03lev1sec6.html](http://82.157.70.109/mirrorbooks/mysqlguide4.1-5.0/0672326736/ch03lev1sec6.html)
-
 
 [1]: http://dev.mysql.com/doc/refman/5.5/en/charset-general.html "Character Sets and Collations in General" 
 
