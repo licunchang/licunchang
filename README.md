@@ -15,6 +15,10 @@ GMT UTC DST 等时间标准简介
 
 MySQL Character Set & Collation 介绍
 
+### mysql-or-innodb-restrictions.md
+
+MySQL 和 InnoDB 中的一些最大值/最小值限制
+
 ### mysql-user-defined-variables-example-1.md
 
 MySQL 用户自定义变量示例一则
@@ -26,10 +30,6 @@ nginx rewrite 模块入门
 ### nginx-log-analyzer-awstats.md
 
 nginx 日志分析工具 awstats 使用简介
-
-### php-sudoku.md
-
-PHP 递归计算所谓“世界最难数独游戏”
 
 ### sql-join.md
 
