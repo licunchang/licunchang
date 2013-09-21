@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# description    Install nginx1.4.2 & mysql5.5.33 & php5.5.3 on CentOS6.4
+# description    Install nginx1.4.2 & mysql5.6.13 & php5.5.4 on CentOS6.4
 # author         LiCunchang(printf@live.com)
 # version        2.0.20130810
 
@@ -36,7 +36,7 @@ trap::interrupt() {
 }
 
 ################################################################################
-# Install mysql-5.5.33
+# Install mysql-5.6.13
 # Globals:
 #   None
 # Arguments:
@@ -87,95 +87,129 @@ mysql::install() {
     mkdir -p /etc/mysql
     chown -R mysql:mysql /etc/mysql
 
-    if [[ -d "/usr/local/src/mysql-5.5.33" ]]; then
+    if [[ -d "/usr/local/src/mysql-5.6.13" ]]; then
         echo "install mysql from source"
-        cd /usr/local/src/mysql-5.5.33 || { echo "Can't read /usr/local/src/mysql-5.5.33."; exit 1; }
-        cmake . -DCMAKE_INSTALL_PREFIX=/usr/local/mysql \
-                -DMYSQL_DATADIR=/data/mysql \
-                -DSYSCONFDIR=/etc/mysql \
-                -DDEFAULT_CHARSET=utf8 \
-                -DDEFAULT_COLLATION=utf8_general_ci \
-                -DWITH_EXTRA_CHARSETS=all \
-                -DWITH_INNOBASE_STORAGE_ENGINE=1 \
-                -DWITH_ARCHIVE_STORAGE_ENGINE=1 \
-                -DWITH_BLACKHOLE_STORAGE_ENGINE=1 \
-                -DWITH_PERFSCHEMA_STORAGE_ENGINE=1 \
-                -DWITHOUT_EXAMPLE_STORAGE_ENGINE=1 \
-                -DWITHOUT_FEDERATED_STORAGE_ENGINE=1 \
-                -DWITHOUT_PARTITION_STORAGE_ENGINE=1 \
-                -DWITH_READLINE=1 -DWITH_LIBWRAP=1 \
-                -DENABLED_LOCAL_INFILE=1 \
-                -DENABLED_PROFILING=1 \
-                -DMYSQL_TCP_PORT=3306 \
-                -DWITH_ZLIB=bundled
+        cd /usr/local/src/mysql-5.6.13 || { echo "Can't read /usr/local/src/mysql-5.6.13."; exit 1; }
+        cmake /usr/local/src/mysql-5.6.13/ -DCMAKE_INSTALL_PREFIX=/usr/local/mysql \
+                                           -DMYSQL_DATADIR=/data/mysql \
+                                           -DSYSCONFDIR=/etc/mysql \
+                                           -DDEFAULT_CHARSET=utf8 \
+                                           -DDEFAULT_COLLATION=utf8_general_ci \
+                                           -DWITH_EXTRA_CHARSETS=all \
+                                           -DWITH_INNOBASE_STORAGE_ENGINE=1 \
+                                           -DWITH_ARCHIVE_STORAGE_ENGINE=1 \
+                                           -DWITH_BLACKHOLE_STORAGE_ENGINE=1 \
+                                           -DWITH_PERFSCHEMA_STORAGE_ENGINE=1 \
+                                           -DWITH_PARTITION_STORAGE_ENGINE=1 \
+                                           -DWITHOUT_EXAMPLE_STORAGE_ENGINE=1 \
+                                           -DWITHOUT_FEDERATED_STORAGE_ENGINE=1 \
+                                           -DWITH_READLINE=1 \
+                                           -DENABLED_LOCAL_INFILE=1 \
+                                           -DENABLED_PROFILING=1 \
+                                           -DMYSQL_TCP_PORT=3306
         make
         make install
     else
-        logger::error "/usr/local/src/mysql-5.5.33 was not fonnd"
+        logger::error "/usr/local/src/mysql-5.6.13 was not fonnd"
         exit 1
     fi
+
+    echo "install mysql db"
+    cd /usr/local/mysql/ || { echo "Can't read /usr/local/mysql/."; exit 1; }
+    /usr/local/mysql/scripts/mysql_install_db --user="${mysql_user}" \
+                                              --basedir=/usr/local/mysql \
+                                              --datadir=/data/mysql
 
     echo "create the config file"
     # Create the config file
     rm -f /etc/my.cnf
-    
-    # Free Memory
-    local memory_free="$(free -m | grep Mem | awk '{print $4}')"
-    
-    if [[ "${memory_free}" -le 128 ]]; then
-        cp -f /usr/local/src/mysql-5.5.33/support-files/my-medium.cnf \
-              /etc/mysql/my.cnf
-    fi
-    
-    if [[ "${memory_free}" -le 512 && "${memory_free}" -gt 128 ]]; then
-        cp -f /usr/local/src/mysql-5.5.33/support-files/my-large.cnf \
-              /etc/mysql/my.cnf
-    fi
-    
-    if [[ "${memory_free}" -le 4096 && "${memory_free}" -gt 512 ]]; then
-        cp -f /usr/local/src/mysql-5.5.33/support-files/my-huge.cnf \
-              /etc/mysql/my.cnf
-    fi
-    
-    if [[ "${memory_free}" -gt 4096 ]]; then
-        cp -f /usr/local/src/mysql-5.5.33/support-files/my-innodb-heavy-4G.cnf \
-              /etc/mysql/my.cnf
-    fi
-    
-    echo "optimize mysql"
+    rm -f /usr/local/mysql/my.cnf
 
-    sed -i '/^\[client\]/a\default-character-set=utf8' /etc/mysql/my.cnf
-        
-    sed -i '/^\[mysqld\]/a\
-datadir = /data/mysql\
-character_set_server=utf8\
-collation-server=utf8_general_ci\
-skip-character-set-client-handshake\
-performance_schema\
-general-log\
-log-warnings\
-performance_schema\
-long_query_time=2\
-slow-query-log\
-log-queries-not-using-indexes\
-innodb_file_per_table\
-expire_logs_days=7' /etc/mysql/my.cnf
+    cat >> /etc/mysql/my.cnf <<'EOF'
+[client]
+
+# CLIENT #
+port                           = 3306
+socket                         = /tmp/mysql.sock
+
+[mysqld]
+
+# GENERAL #
+user                           = mysql
+default-storage-engine         = InnoDB
+socket                         = /tmp/mysql.sock
+pid-file                       = /data/mysql/mysql.pid
+
+# MyISAM #
+key-buffer-size                = 32M
+myisam-recover                 = FORCE,BACKUP
+
+# SAFETY #
+max-allowed-packet             = 16M
+max-connect-errors             = 1000000
+skip-name-resolve
+sql-mode                       = STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_AUTO_VALUE_ON_ZERO,NO_ENGINE_SUBSTITUTION,NO_ZERO_DATE,NO_ZERO_IN_DATE,ONLY_FULL_GROUP_BY
+sysdate-is-now                 = 1
+innodb                         = FORCE
+innodb-strict-mode             = 1
+
+# DATA STORAGE #
+datadir                        = /data/mysql/
+
+# BINARY LOGGING #
+log-bin                        = mysql-bin
+expire-logs-days               = 14
+sync-binlog                    = 1
+
+# CACHES AND LIMITS #
+tmp-table-size                 = 32M
+max-heap-table-size            = 32M
+query-cache-type               = 0
+query-cache-size               = 0
+max-connections                = 500
+thread-cache-size              = 50
+open-files-limit               = 65535
+table-definition-cache         = 1024
+table-open-cache               = 4096
+
+# INNODB #
+innodb-flush-method            = O_DIRECT
+innodb-log-files-in-group      = 2
+innodb-log-file-size           = 128M
+innodb-flush-log-at-trx-commit = 1
+innodb-file-per-table          = 1
+innodb-buffer-pool-size        = 1456M
+
+# LOGGING #
+log-error                      = /data/mysql/mysql-error.log
+log_warnings                   = 1
+log-queries-not-using-indexes  = 1
+slow-query-log                 = 1
+slow-query-log-file            = /data/mysql/mysql-slow.log
+long_query_time                = 2
+
+# CHARSET #
+character-set-server           = utf8
+collation-server               = utf8_general_ci
+skip-character-set-client-handshake
+
+# PERFORMANCE SCHEMA #
+performance_schema             = 1
+
+# REPLICATION #
+server-id                      = 1
+
+[mysql]
+no-auto-rehash
+safe-updates
+EOF
     
-    sed -i 's/^#innodb_data_home_dir/innodb_data_home_dir/' /etc/mysql/my.cnf
-    sed -i 's/^#innodb_data_file_path/innodb_data_file_path/' /etc/mysql/my.cnf
-    sed -i 's/^#innodb_log_group_home_dir/innodb_log_group_home_dir/' /etc/mysql/my.cnf
-    sed -i 's/^#innodb_buffer_pool_size/innodb_buffer_pool_size/' /etc/mysql/my.cnf
-    sed -i 's/^#innodb_additional_mem_pool_size/innodb_additional_mem_pool_size/' /etc/mysql/my.cnf
-    sed -i 's/^#innodb_log_file_size/innodb_log_file_size/' /etc/mysql/my.cnf
-    sed -i 's/^#innodb_log_buffer_size/innodb_log_buffer_size/' /etc/mysql/my.cnf
-    sed -i 's/^#innodb_flush_log_at_trx_commit/innodb_flush_log_at_trx_commit/' /etc/mysql/my.cnf
-    sed -i 's/^#innodb_lock_wait_timeout/innodb_lock_wait_timeout/' /etc/mysql/my.cnf
-    
-    echo "install mysql db"
-    /usr/local/mysql/scripts/mysql_install_db --user="${mysql_user}" \
-                                              --basedir=/usr/local/mysql \
-                                              --datadir=/data/mysql
-      
+    # local memory_free="$(free -m | grep Mem | awk '{print $4}')"
+    # if [[ "${memory_free}" -le 128 ]]; then
+    #    cp -f /usr/local/src/mysql-5.6.13/support-files/my-medium.cnf \
+    #          /etc/mysql/my.cnf
+    # fi
+
     echo "create mysql init script"
     mkdir -p /data/init.d/
     cp -f /usr/local/mysql/support-files/mysql.server /data/init.d/mysql
@@ -212,7 +246,7 @@ EOF
 }
 
 ################################################################################
-# Install php-5.5.3
+# Install php-5.5.4
 # Globals:
 #   None
 # Arguments:
@@ -295,9 +329,9 @@ php::install() {
         fi
     fi
 
-    if [[ -d "/usr/local/src/php-5.5.3" ]]; then
+    if [[ -d "/usr/local/src/php-5.5.4" ]]; then
         echo "install php from source"
-        cd /usr/local/src/php-5.5.3 || { logger::error "Can't read /usr/local/src/php-5.5.3."; exit 1; }
+        cd /usr/local/src/php-5.5.4/ || { logger::error "Can't read /usr/local/src/php-5.5.4/."; exit 1; }
         ./configure --prefix=/usr/local/php \
                     --with-config-file-path=/usr/local/php/etc \
                     --enable-bcmath \
@@ -305,7 +339,6 @@ php::install() {
                     --enable-sysvsem \
                     --enable-ftp \
                     --with-curl \
-                    --with-curlwrappers \
                     --with-png-dir \
                     --with-jpeg-dir \
                     --with-freetype-dir \
@@ -332,12 +365,12 @@ php::install() {
         make
         make install
     else
-        logger::error "/usr/local/src/php-5.5.3 was not fonnd"
+        logger::error "/usr/local/src/php-5.5.4 was not fonnd"
         exit 1
     fi
     
     echo "create /etc/php.ini"
-    cp -f /usr/local/src/php-5.5.3/php.ini-production /usr/local/php/etc/php.ini
+    cp -f /usr/local/src/php-5.5.4/php.ini-production /usr/local/php/etc/php.ini
     rm -rf /etc/php.ini
 
     # vi /usr/local/php/etc/php.ini
@@ -390,7 +423,7 @@ php::install() {
     fi
 
     echo "create php init script"
-    cp -f /usr/local/src/php-5.5.3/sapi/fpm/init.d.php-fpm /data/init.d/php-fpm
+    cp -f /usr/local/src/php-5.5.4/sapi/fpm/init.d.php-fpm /data/init.d/php-fpm
     
     chmod 755 /data/init.d/php-fpm
     
@@ -764,11 +797,15 @@ prepare() {
 
     local options="$(${NGINX_SBIN_FILE} -V 2>&1 | grep 'configure arguments:')"
 
-    local nginx_user="$(echo ${options} | sed 's/[^*]*--user=\([^ ]*\).*/\1/g')"
-    local nginx_group="$(echo ${options} | sed 's/[^*]*--group=\([^ ]*\).*/\1/g')"
+    local nginx_user
+    local nginx_group
+    nginx_user="$(echo ${options} | sed 's/[^*]*--user=\([^ ]*\).*/\1/g')"
+    nginx_group="$(echo ${options} | sed 's/[^*]*--group=\([^ ]*\).*/\1/g')"
 
-    local group=$(grep "^${nginx_group}" /etc/group | awk -F: '{print $1}')
-    local user=$(grep "^${nginx_user}" /etc/passwd | awk -F: '{print $1}')
+    local group
+    local user
+    group=$(grep "^${nginx_group}" /etc/group | awk -F: '{print $1}')
+    user=$(grep "^${nginx_user}" /etc/passwd | awk -F: '{print $1}')
 
     if [[ "${nginx_group}" != "${group}" ]]; then
         /usr/sbin/groupadd -r "${nginx_group}"
@@ -1108,7 +1145,7 @@ xdebug::install() {
     make install
     
     mkdir -p /usr/local/php/ext/
-    mv /usr/local/php/lib/php/extensions/no-debug-non-zts-20100525/xdebug.so /usr/local/php/ext/
+    mv /usr/local/php/lib/php/extensions/no-debug-non-zts-20121212/xdebug.so /usr/local/php/ext/
 
     sed -i '/^; extension_dir = "\.\/"$/a\
 extension_dir = /usr/local/php/ext/' /usr/local/php/etc/php.ini
@@ -1188,8 +1225,8 @@ main() {
     # 01 nginx-1.4.2.tar.gz
     # 02 openssl-1.0.1e.tar.gz
     # 03 pcre-8.33.tar.gz
-    # 04 mysql-5.5.33.tar.gz
-    # 05 php-5.5.3.tar.gz
+    # 04 mysql-5.6.13.tar.gz
+    # 05 php-5.5.4.tar.gz
     # 06 libiconv-1.14.tar.gz
     # 07 mcrypt-2.6.8.tar.gz
     # 08 mhash-0.9.9.9.tar.gz
@@ -1202,8 +1239,8 @@ main() {
     PACKAGES[0]="nginx-1.4.2.tar.gz"
     PACKAGES[1]="openssl-1.0.1e.tar.gz"
     PACKAGES[2]="pcre-8.33.tar.gz"
-    PACKAGES[3]="mysql-5.5.33.tar.gz"
-    PACKAGES[4]="php-5.5.3.tar.gz"
+    PACKAGES[3]="mysql-5.6.13.tar.gz"
+    PACKAGES[4]="php-5.5.4.tar.gz"
     PACKAGES[5]="libiconv-1.14.tar.gz"
     PACKAGES[6]="mcrypt-2.6.8.tar.gz"
     PACKAGES[7]="mhash-0.9.9.9.tar.gz"
@@ -1290,13 +1327,13 @@ EOF
     yum -y install make cmake gcc gcc-c++ chkconfig automake autoconf libtool
 
     #MySQL
-    if [[ -d "/usr/local/src/mysql-5.5.33" ]]; then
+    if [[ -d "/usr/local/src/mysql-5.6.13" ]]; then
         echo "mysql::install"
         mysql::install
     fi
 
     #php
-    if [[ -d "/usr/local/src/php-5.5.3" ]]; then
+    if [[ -d "/usr/local/src/php-5.5.4" ]]; then
         echo "php::install"
         php::install
     fi

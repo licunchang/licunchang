@@ -49,10 +49,6 @@ LAMP (Linux:CentOS6.4 + Apache + MySQL + PHP) 安装脚本
 
 LNMP (Linux:CentOS6.4 + Nginx + MySQL + PHP) 安装脚本
 
-### lnmpex.sh
-
-CentOS 下安装 xtrabackup & memcached & redis & varnish & tcpdump 等
-
 ### nginx.init.sh
 
 Nginx 的启停脚本 /etc/init.d/nginx 

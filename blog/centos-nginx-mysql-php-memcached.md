@@ -49,8 +49,8 @@
 *  nginx-1.4.2.tar.gz
 *  openssl-1.0.1e.tar.gz
 *  pcre-8.33.tar.gz
-*  mysql-5.5.33.tar.gz
-*  php-5.4.19.tar.gz
+*  mysql-5.6.13.tar.gz
+*  php-5.5.4.tar.gz
 *  libiconv-1.14.tar.gz
 *  mcrypt-2.6.8.tar.gz
 *  mhash-0.9.9.9.tar.gz
@@ -86,93 +86,131 @@ MySQL 的 bin-log 是顺序写日志，需要提供较高的顺序写能力，My
 ### 2.3 源码安装
 
     cd /usr/local/src
-    tar zxvf /usr/local/src/mysql-5.5.33.tar.gz
-    cd /usr/local/src/mysql-5.5.33
-    cmake . -DCMAKE_INSTALL_PREFIX=/usr/local/mysql -DMYSQL_DATADIR=/data/mysql -DSYSCONFDIR=/etc/mysql -DDEFAULT_CHARSET=utf8 -DDEFAULT_COLLATION=utf8_general_ci -DWITH_EXTRA_CHARSETS=all -DWITH_INNOBASE_STORAGE_ENGINE=1 -DWITH_ARCHIVE_STORAGE_ENGINE=1 -DWITH_BLACKHOLE_STORAGE_ENGINE=1 -DWITH_PERFSCHEMA_STORAGE_ENGINE=1 -DWITHOUT_EXAMPLE_STORAGE_ENGINE=1 -DWITHOUT_FEDERATED_STORAGE_ENGINE=1 -DWITHOUT_PARTITION_STORAGE_ENGINE=1 -DWITH_READLINE=1 -DWITH_LIBWRAP=1 -DENABLED_LOCAL_INFILE=1 -DENABLED_PROFILING=1 -DMYSQL_TCP_PORT=3306 -DWITH_ZLIB=bundled
+    tar zxvf /usr/local/src/mysql-5.6.13.tar.gz
+    cd /usr/local/src/mysql-5.6.13
+    cmake /usr/local/src/mysql-5.6.13/ -DCMAKE_INSTALL_PREFIX=/usr/local/mysql \
+                                       -DMYSQL_DATADIR=/data/mysql \
+                                       -DSYSCONFDIR=/etc/mysql \
+                                       -DDEFAULT_CHARSET=utf8 \
+                                       -DDEFAULT_COLLATION=utf8_general_ci \
+                                       -DWITH_EXTRA_CHARSETS=all \
+                                       -DWITH_INNOBASE_STORAGE_ENGINE=1 \
+                                       -DWITH_ARCHIVE_STORAGE_ENGINE=1 \
+                                       -DWITH_BLACKHOLE_STORAGE_ENGINE=1 \
+                                       -DWITH_PERFSCHEMA_STORAGE_ENGINE=1 \
+                                       -DWITH_PARTITION_STORAGE_ENGINE=1 \
+                                       -DWITHOUT_EXAMPLE_STORAGE_ENGINE=1 \
+                                       -DWITHOUT_FEDERATED_STORAGE_ENGINE=1 \
+                                       -DWITH_READLINE=1 \
+                                       -DENABLED_LOCAL_INFILE=1 \
+                                       -DENABLED_PROFILING=1 \
+                                       -DMYSQL_TCP_PORT=3306
+
     make
     make install
     
-### 2.4 配置 my.cnf 文件
+### 2.4 初始化数据目录和数据
+
+    cd /usr/local/mysql/
+    /usr/local/mysql/scripts/mysql_install_db --user=mysql --basedir=/usr/local/mysql --datadir=/data/mysql
+
+脚本会在程序根目录下生成一个配置文件 my.cnf ，没什么用，删掉。
+
+### 2.5 配置 my.cnf 文件
 
     rm -f /etc/my.cnf
-    
-系统提供了几个配置文件样例，如果不精通各项配置，可根据系统资源情况修改官方样例，各配置文件的说明如下：    
-
-* my-huge.cnf 
-
->This is for a large system with memory of 1G-2G where the system runs mainly MySQL.  
-
-* my-large.cnf 
-
->This is for a large system with memory = 512M where the system runs mainly MySQL.  
-
-* my-medium.cnf
-
->This is for a system with little memory (32M - 64M) where MySQL plays an important part, or systems up to 128M where MySQL is used together with other programs (such as a web server).  
-
-* my-small.cnf 
-
->This is for a system with little memory (<= 64M) where MySQL is only used from time to time and it's important that the mysqld daemon doesn't use much resources.  
-
-* my-innodb-heavy-4G.cnf
-
->This is a MySQL example config file for systems with 4GB of memory running mostly MySQL using InnoDB only tables and performing complex queries with few connections.    
-
-    cd /usr/local/src/mysql-5.5.33
-    cp ./support-files/my-medium.cnf /etc/mysql/my.cnf
-
-编辑 my.cnf 文件
-
+    rm -f /usr/local/mysql/my.cnf
     vi /etc/mysql/my.cnf
 
-添加字符集配置和慢查询日志，记录没有使用索引的查询，`general-log` 将开启一般日志，所有查询语句将记录到日志中，不推荐在生产环境中使用，仅限测试环境调试。log-bin 记录 master 服务器的 bin_log 的名称，如果不设置此选项，那么 MySQL 使用 `hostname-bin` 的形式，如果主机更改 hostname 那么 slaver 服务器将无法找到主服务器的 bin-log 从而产生错误，从这个角度上讲，设置一个 bin-log 名称是有必要的。
+5.6 的系统中默认不再分发my-huge.cnf、my-large.cnf、my-medium.cnf等几个默认配置文件，我们需要根据自己的情况来配置一个 my.cnf，下面的配置适合 2GB 内存服务器使用
 
     [client]
-    default-character-set=utf8
+
+    # CLIENT #
+    port                           = 3306
+    socket                         = /tmp/mysql.sock
 
     [mysqld]
-    datadir=/data/mysql
-    character_set_server=utf8
-    collation-server=utf8_general_ci
+
+    # GENERAL #
+    user                           = mysql
+    default-storage-engine         = InnoDB
+    socket                         = /tmp/mysql.sock
+    pid-file                       = /data/mysql/mysql.pid
+
+    # MyISAM #
+    key-buffer-size                = 32M
+    myisam-recover                 = FORCE,BACKUP
+
+    # SAFETY #
+    max-allowed-packet             = 16M
+    max-connect-errors             = 1000000
+    skip-name-resolve
+    sql-mode                       = STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_AUTO_VALUE_ON_ZERO,NO_ENGINE_SUBSTITUTION,NO_ZERO_DATE,NO_ZERO_IN_DATE,ONLY_FULL_GROUP_BY
+    sysdate-is-now                 = 1
+    innodb                         = FORCE
+    innodb-strict-mode             = 1
+
+    # DATA STORAGE #
+    datadir                        = /data/mysql/
+
+    # BINARY LOGGING #
+    log-bin                        = mysql-bin
+    expire-logs-days               = 14
+    sync-binlog                    = 1
+
+    # CACHES AND LIMITS #
+    tmp-table-size                 = 32M
+    max-heap-table-size            = 32M
+    query-cache-type               = 0
+    query-cache-size               = 0
+    max-connections                = 500
+    thread-cache-size              = 50
+    open-files-limit               = 65535
+    table-definition-cache         = 1024
+    table-open-cache               = 4096
+
+    # INNODB #
+    default-storage-engine         = INNODB
+    innodb-flush-method            = O_DIRECT
+    innodb-log-files-in-group      = 2
+    innodb-log-file-size           = 128M
+    innodb-flush-log-at-trx-commit = 1
+    innodb-file-per-table          = 1
+    innodb-buffer-pool-size        = 1456M
+
+    # LOGGING #
+    log-error                      = /data/mysql/mysql-error.log
+    log_warnings                   = 1
+    log-queries-not-using-indexes  = 1
+    slow-query-log                 = 1
+    slow-query-log-file            = /data/mysql/mysql-slow.log
+    long_query_time                = 2
+
+    # CHARSET #
+    character-set-server           = utf8
+    collation-server               = utf8_general_ci
     skip-character-set-client-handshake
-    general-log
-    log-warnings
-    long_query_time=2
-    slow-query-log
-    log-queries-not-using-indexes
-    innodb_file_per_table
-    expire_logs_days=7
-    server-id=1
-    log-bin=mysql-bin
-    log-bin-index=mysql-bin.index
+
+    # PERFORMANCE SCHEMA #
+    performance_schema             = 1
+
+    # REPLICATION #
+    server-id                      = 1
+
+    [mysql]
+    no-auto-rehash
+    safe-updates
     
-使用 InnoDB 打开以下选项
-
-    # Uncomment the following if you are using InnoDB tables
-    innodb_data_home_dir = /data/mysql
-    innodb_data_file_path = ibdata1:10M:autoextend
-    innodb_log_group_home_dir = /data/mysql
-    # You can set .._buffer_pool_size up to 50 - 80 %
-    # of RAM but beware of setting memory usage too high
-    innodb_buffer_pool_size = 16M
-    innodb_additional_mem_pool_size = 2M
-    # Set .._log_file_size to 25 % of buffer pool size
-    innodb_log_file_size = 5M
-    innodb_log_buffer_size = 8M
-    innodb_flush_log_at_trx_commit = 1
-    innodb_lock_wait_timeout = 50
-
-其中
+添加字符集配置和慢查询日志，记录没有使用索引的查询，`general-log` 将开启一般日志，所有查询语句将记录到日志中，不推荐在生产环境中使用，仅限测试环境调试。log-bin 记录 master 服务器的 bin_log 的名称，如果不设置此选项，那么 MySQL 使用 `hostname-bin` 的形式，如果主机更改 hostname 那么 slaver 服务器将无法找到主服务器的 bin-log 从而产生错误，从这个角度上讲，设置一个 bin-log 名称是有必要的。
+    
+使用 InnoDB 以下选项
 
 * **innodb\_data\_file\_path** 调整数据库表空间增量
 * **innodb\_buffer\_pool\_size** 调整为内存总量的50% - 80%
 * **innodb\_log\_file\_size** 调整为`innodb_buffer_pool_size`的25%
 
-### 2.6 生成授权表
-
-    /usr/local/mysql/scripts/mysql_install_db --user=mysql --basedir=/usr/local/mysql --datadir=/data/mysql
-
-### 2.7 创建 MySQL 启动停止脚本
+### 2.6 创建 MySQL 启动停止脚本
 
 你可以把 MySQL 加入系统启动，系统启动时自动启动 MySQL 服务，不过生产环境不推荐这么做。
 
@@ -195,7 +233,7 @@ MySQL 的 bin-log 是顺序写日志，需要提供较高的顺序写能力，My
 
     service mysql start
 
-### 2.8 MySQL安全设置
+### 2.7 MySQL安全设置
 
 MySQL 提供了一个脚本在安装初期修改密码的脚本，执行脚本，按照提醒即可对默认密码用户等进行修改
 
@@ -215,7 +253,7 @@ MySQL 提供了一个脚本在安装初期修改密码的脚本，执行脚本�
 
     GRANT INSERT, DELETE, UPDATE, SELECT ON licunchang.* TO 'username'@'%' IDENTIFIED BY 'password' WITH GRANT OPTION;
 
-### 2.9 MySQL 防火墙设置
+### 2.8 MySQL 防火墙设置
 
 配置防火墙，开启 3306 端口
 
@@ -290,16 +328,74 @@ MySQL 提供了一个脚本在安装初期修改密码的脚本，执行脚本�
     make install
 
     cd /usr/local/src
-    tar zxvf php-5.4.19.tar.gz
-    cd /usr/local/src/php-5.4.19
+    tar zxvf php-5.5.4.tar.gz
+    cd /usr/local/src/php-5.5.4
 
 使用 mysqlnd 驱动，则使用下面的编译方法（推荐）
 
-    ./configure --prefix=/usr/local/php --with-config-file-path=/usr/local/php/etc --enable-bcmath --enable-shmop --enable-sysvsem --enable-ftp --with-curl --with-curlwrappers --with-png-dir --with-jpeg-dir --with-freetype-dir --with-gd --enable-gd-native-ttf --enable-mbstring --enable-soap --enable-sockets --enable-zip --with-xmlrpc --with-mysql=mysqlnd --with-mysqli=mysqlnd --with-pdo-mysql=mysqlnd --enable-fpm --with-fpm-user=www --with-fpm-group=www --with-zlib --with-iconv-dir=/usr/local/libiconv/ --with-pcre-dir=/usr/local/pcre --with-libxml-dir --with-mcrypt=/usr/local/libmcrypt/ --with-mhash=/usr/local/mhash/ --disable-ipv6
+    ./configure --prefix=/usr/local/php \
+                --with-config-file-path=/usr/local/php/etc \
+                --enable-bcmath \
+                --enable-shmop \
+                --enable-sysvsem \
+                --enable-ftp \
+                --with-curl \
+                --with-png-dir \
+                --with-jpeg-dir \
+                --with-freetype-dir \
+                --with-gd \
+                --enable-gd-native-ttf \
+                --enable-mbstring \
+                --enable-soap \
+                --enable-sockets \
+                --enable-zip \
+                --with-xmlrpc \
+                --with-mysql=mysqlnd \
+                --with-mysqli=mysqlnd \
+                --with-pdo-mysql=mysqlnd \
+                --enable-fpm \
+                --with-fpm-user=www \
+                --with-fpm-group=www \
+                --with-zlib \
+                --with-iconv-dir=/usr/local/libiconv/ \
+                --with-pcre-dir=/usr/local/pcre \
+                --with-libxml-dir \
+                --with-mcrypt=/usr/local/libmcrypt/ \
+                --with-mhash=/usr/local/mhash/ \
+                --disable-ipv6
 
 使用 libmysql 驱动，则使用下面的编译方法
 
-    ./configure --prefix=/usr/local/php --with-config-file-path=/usr/local/php/etc --enable-bcmath --enable-shmop --enable-sysvsem --enable-ftp --with-curl --with-curlwrappers --with-png-dir --with-jpeg-dir --with-freetype-dir --with-gd --enable-gd-native-ttf --enable-mbstring --enable-soap --enable-sockets --enable-zip --with-xmlrpc --with-mysql=/usr/local/mysql --with-mysqli=/usr/local/mysql/bin/mysql_config --with-pdo-mysql=/usr/local/mysql/ --enable-fpm --with-fpm-user=www --with-fpm-group=www --with-zlib --with-iconv-dir=/usr/local/libiconv/ --with-pcre-dir=/usr/local/pcre --with-libxml-dir --with-mcrypt=/usr/local/libmcrypt/ --with-mhash=/usr/local/mhash/ --disable-ipv6
+    ./configure --prefix=/usr/local/php \
+                --with-config-file-path=/usr/local/php/etc \
+                --enable-bcmath \
+                --enable-shmop \
+                --enable-sysvsem \
+                --enable-ftp \
+                --with-curl \
+                --with-png-dir \
+                --with-jpeg-dir \
+                --with-freetype-dir \
+                --with-gd \
+                --enable-gd-native-ttf \
+                --enable-mbstring \
+                --enable-soap \
+                --enable-sockets \
+                --enable-zip \
+                --with-xmlrpc \
+                --with-mysql=/usr/local/mysql \
+                --with-mysqli=/usr/local/mysql/bin/mysql_config \
+                --with-pdo-mysql=/usr/local/mysql/ \
+                --enable-fpm \
+                --with-fpm-user=www \
+                --with-fpm-group=www \
+                --with-zlib \
+                --with-iconv-dir=/usr/local/libiconv/ \
+                --with-pcre-dir=/usr/local/pcre \
+                --with-libxml-dir \
+                --with-mcrypt=/usr/local/libmcrypt/ \
+                --with-mhash=/usr/local/mhash/ \
+                --disable-ipv6
 
     make
     # make test # 安装前可以使用 make test 做一下测试，发现安装过程中的错误
@@ -342,7 +438,7 @@ pm 这几个选项在 php-fpm.conf 中有详细的功能描述，不清楚的可
 
 同样的，生产环境中不推荐这么做
 
-    cp /usr/local/src/php-5.4.19/sapi/fpm/init.d.php-fpm /etc/rc.d/init.d/php-fpm
+    cp /usr/local/src/php-5.5.4/sapi/fpm/init.d.php-fpm /etc/rc.d/init.d/php-fpm
     chmod 755 /etc/rc.d/init.d/php-fpm
     chkconfig --add php-fpm
     chkconfig --level 35 php-fpm on
