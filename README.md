@@ -11,6 +11,10 @@ LNMP (Linux:CentOS6.4 + Nginx + MySQL + PHP) 安装文档
 
 GMT UTC DST 等时间标准简介
 
+### http.md
+
+《HTTP权威指南》读书笔记
+
 ### mysql-character-set-collation.md
 
 MySQL Character Set & Collation 介绍
