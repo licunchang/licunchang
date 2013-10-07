@@ -1,3 +1,9 @@
+**File Name** http.md  
+**Description**  《HTTP权威指南》读书笔记   
+**Author** LiCunchang (printf@live.com)  
+**Version** 1.0.20131001  
+
+------
 
 ## 1 Overview of HTTP
 
