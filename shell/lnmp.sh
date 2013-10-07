@@ -338,6 +338,7 @@ php::install() {
                     --enable-shmop \
                     --enable-sysvsem \
                     --enable-ftp \
+                    --enable-opcache \
                     --with-curl \
                     --with-png-dir \
                     --with-jpeg-dir \

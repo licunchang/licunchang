@@ -339,6 +339,7 @@ MySQL 提供了一个脚本在安装初期修改密码的脚本，执行脚本�
                 --enable-shmop \
                 --enable-sysvsem \
                 --enable-ftp \
+                --enable-opcache \
                 --with-curl \
                 --with-png-dir \
                 --with-jpeg-dir \
