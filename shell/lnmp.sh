@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# description    Install nginx1.4.2 & mysql5.6.13 & php5.5.4 on CentOS6.4
+# description    Install nginx1.4.3 & mysql5.6.14 & php5.5.5 on CentOS6.4
 # author         LiCunchang(printf@live.com)
 # version        2.0.20130810
 
@@ -36,7 +36,7 @@ trap::interrupt() {
 }
 
 ################################################################################
-# Install mysql-5.6.13
+# Install mysql-5.6.14
 # Globals:
 #   None
 # Arguments:
@@ -87,10 +87,10 @@ mysql::install() {
     mkdir -p /etc/mysql
     chown -R mysql:mysql /etc/mysql
 
-    if [[ -d "/usr/local/src/mysql-5.6.13" ]]; then
+    if [[ -d "/usr/local/src/mysql-5.6.14" ]]; then
         echo "install mysql from source"
-        cd /usr/local/src/mysql-5.6.13 || { echo "Can't read /usr/local/src/mysql-5.6.13."; exit 1; }
-        cmake /usr/local/src/mysql-5.6.13/ -DCMAKE_INSTALL_PREFIX=/usr/local/mysql \
+        cd /usr/local/src/mysql-5.6.14 || { echo "Can't read /usr/local/src/mysql-5.6.14."; exit 1; }
+        cmake /usr/local/src/mysql-5.6.14/ -DCMAKE_INSTALL_PREFIX=/usr/local/mysql \
                                            -DMYSQL_DATADIR=/data/mysql \
                                            -DSYSCONFDIR=/etc/mysql \
                                            -DDEFAULT_CHARSET=utf8 \
@@ -110,7 +110,7 @@ mysql::install() {
         make
         make install
     else
-        logger::error "/usr/local/src/mysql-5.6.13 was not fonnd"
+        logger::error "/usr/local/src/mysql-5.6.14 was not fonnd"
         exit 1
     fi
 
@@ -207,7 +207,7 @@ EOF
     
     # local memory_free="$(free -m | grep Mem | awk '{print $4}')"
     # if [[ "${memory_free}" -le 128 ]]; then
-    #    cp -f /usr/local/src/mysql-5.6.13/support-files/my-medium.cnf \
+    #    cp -f /usr/local/src/mysql-5.6.14/support-files/my-medium.cnf \
     #          /etc/mysql/my.cnf
     # fi
 
@@ -247,7 +247,7 @@ EOF
 }
 
 ################################################################################
-# Install php-5.5.4
+# Install php-5.5.5
 # Globals:
 #   None
 # Arguments:
@@ -330,9 +330,9 @@ php::install() {
         fi
     fi
 
-    if [[ -d "/usr/local/src/php-5.5.4" ]]; then
+    if [[ -d "/usr/local/src/php-5.5.5" ]]; then
         echo "install php from source"
-        cd /usr/local/src/php-5.5.4/ || { logger::error "Can't read /usr/local/src/php-5.5.4/."; exit 1; }
+        cd /usr/local/src/php-5.5.5/ || { logger::error "Can't read /usr/local/src/php-5.5.5/."; exit 1; }
         ./configure --prefix=/usr/local/php \
                     --with-config-file-path=/usr/local/php/etc \
                     --enable-bcmath \
@@ -367,12 +367,12 @@ php::install() {
         make
         make install
     else
-        logger::error "/usr/local/src/php-5.5.4 was not fonnd"
+        logger::error "/usr/local/src/php-5.5.5 was not fonnd"
         exit 1
     fi
     
     echo "create /etc/php.ini"
-    cp -f /usr/local/src/php-5.5.4/php.ini-production /usr/local/php/etc/php.ini
+    cp -f /usr/local/src/php-5.5.5/php.ini-production /usr/local/php/etc/php.ini
     rm -rf /etc/php.ini
 
     # vi /usr/local/php/etc/php.ini
@@ -425,7 +425,7 @@ php::install() {
     fi
 
     echo "create php init script"
-    cp -f /usr/local/src/php-5.5.4/sapi/fpm/init.d.php-fpm /data/init.d/php-fpm
+    cp -f /usr/local/src/php-5.5.5/sapi/fpm/init.d.php-fpm /data/init.d/php-fpm
     
     chmod 755 /data/init.d/php-fpm
     
@@ -437,7 +437,7 @@ php::install() {
 }
 
 ################################################################################
-# Install nginx-1.4.2
+# Install nginx-1.4.3
 # Globals:
 #   None
 # Arguments:
@@ -491,12 +491,12 @@ nginx::install() {
         exit 1
     fi
     
-    if [[ -d "/usr/local/src/nginx-1.4.2" ]]; then
+    if [[ -d "/usr/local/src/nginx-1.4.3" ]]; then
         echo "install nginx from source"
-        cd /usr/local/src/nginx-1.4.2 || { logger::error "Can't read /usr/local/src/nginx-1.4.2."; exit 1; }
+        cd /usr/local/src/nginx-1.4.3 || { logger::error "Can't read /usr/local/src/nginx-1.4.3."; exit 1; }
         
         sed -i 's/nginx\b/Microsoft-IIS/g' ./src/core/nginx.h
-        sed -i 's/1.4.2/7.5/' ./src/core/nginx.h
+        sed -i 's/1.4.3/7.5/' ./src/core/nginx.h
         sed -i 's/Server: nginx/Server: Microsoft-IIS/' ./src/http/ngx_http_header_filter_module.c
         sed -i 's/>nginx</>Microsoft-IIS</' ./src/http/ngx_http_special_response.c
         
@@ -513,7 +513,7 @@ nginx::install() {
         make
         make install
     else
-        logger::error "/usr/local/src/nginx-1.4.2 was not fonnd"
+        logger::error "/usr/local/src/nginx-1.4.3 was not fonnd"
         exit 1
     fi
 
@@ -1195,6 +1195,29 @@ xtrabackup::install() {
 }
 
 ################################################################################
+# Install redis-2.6.16
+# Globals:
+#   None
+# Arguments:
+#   None
+# Returns:
+#   Integer
+################################################################################
+redis::install() {
+    yum -y install tcl
+
+    cd /usr/local/src || { logger::error "Can't read /usr/local/src."; exit 1; }
+
+    tar zxvf /usr/local/src/redis-2.6.16.tar.gz
+
+    cd /usr/local/src/redis-2.6.16
+    make
+    make PREFIX=/usr/local/redis install
+
+    
+}
+
+################################################################################
 # The Main Function
 # Globals:
 #   None
@@ -1224,11 +1247,11 @@ main() {
     echo "└─────────────────────────────────────────────────────────────────┘"
     echo ""
 
-    # 01 nginx-1.4.2.tar.gz
+    # 01 nginx-1.4.3.tar.gz
     # 02 openssl-1.0.1e.tar.gz
     # 03 pcre-8.33.tar.gz
-    # 04 mysql-5.6.13.tar.gz
-    # 05 php-5.5.4.tar.gz
+    # 04 mysql-5.6.14.tar.gz
+    # 05 php-5.5.5.tar.gz
     # 06 libiconv-1.14.tar.gz
     # 07 mcrypt-2.6.8.tar.gz
     # 08 mhash-0.9.9.9.tar.gz
@@ -1238,11 +1261,11 @@ main() {
     # 12 percona-xtrabackup-2.1.4.tar.gz
     # 13 * mysql-5.5.17.tar.gz(for xtrabackup)
 
-    PACKAGES[0]="nginx-1.4.2.tar.gz"
+    PACKAGES[0]="nginx-1.4.3.tar.gz"
     PACKAGES[1]="openssl-1.0.1e.tar.gz"
     PACKAGES[2]="pcre-8.33.tar.gz"
-    PACKAGES[3]="mysql-5.6.13.tar.gz"
-    PACKAGES[4]="php-5.5.4.tar.gz"
+    PACKAGES[3]="mysql-5.6.14.tar.gz"
+    PACKAGES[4]="php-5.5.5.tar.gz"
     PACKAGES[5]="libiconv-1.14.tar.gz"
     PACKAGES[6]="mcrypt-2.6.8.tar.gz"
     PACKAGES[7]="mhash-0.9.9.9.tar.gz"
@@ -1329,19 +1352,19 @@ EOF
     yum -y install make cmake gcc gcc-c++ chkconfig automake autoconf libtool
 
     #MySQL
-    if [[ -d "/usr/local/src/mysql-5.6.13" ]]; then
+    if [[ -d "/usr/local/src/mysql-5.6.14" ]]; then
         echo "mysql::install"
         mysql::install
     fi
 
     #php
-    if [[ -d "/usr/local/src/php-5.5.4" ]]; then
+    if [[ -d "/usr/local/src/php-5.5.5" ]]; then
         echo "php::install"
         php::install
     fi
 
     #nginx
-    if [[ -d "/usr/local/src/nginx-1.4.2" ]]; then
+    if [[ -d "/usr/local/src/nginx-1.4.3" ]]; then
         echo "nginx::install"
         nginx::install
     fi
@@ -1356,6 +1379,12 @@ EOF
     if [[ -f "/usr/local/src/percona-xtrabackup-2.1.4.tar.gz" ]]; then
         echo "xtrabackup::install"
         xtrabackup::install
+    fi
+
+    #redis
+    if [[ -f "/usr/local/src/redis-2.6.16.tar.gz" ]]; then
+        echo "redis::install"
+        redis::install
     fi
 }
 
