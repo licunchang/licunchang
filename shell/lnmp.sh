@@ -152,6 +152,7 @@ sql-mode                       = STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,
 sysdate-is-now                 = 1
 innodb                         = FORCE
 innodb-strict-mode             = 1
+explicit_defaults_for_timestamp
 
 # DATA STORAGE #
 datadir                        = /data/mysql/

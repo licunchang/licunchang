@@ -150,7 +150,8 @@ MySQL 的 bin-log 是顺序写日志，需要提供较高的顺序写能力，My
     sysdate-is-now                 = 1
     innodb                         = FORCE
     innodb-strict-mode             = 1
-
+    explicit_defaults_for_timestamp
+    
     # DATA STORAGE #
     datadir                        = /data/mysql/
 
