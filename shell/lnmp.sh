@@ -381,7 +381,12 @@ php::install() {
     sed -i 's#^expose_php = On#expose_php = Off#' /usr/local/php/etc/php.ini
     sed -i 's#^session.name = PHPSESSID#session.name = JSESSIONID#' /usr/local/php/etc/php.ini
     sed -i 's#^;session.save_path#session.save_path#' /usr/local/php/etc/php.ini
-  
+    
+    # [opcache]
+    sed -i 's#^;opcache.enable=0#opcache.enable=1#' /usr/local/php/etc/php.ini
+    sed -i 's#^;opcache.enable_cli=0#opcache.enable_cli=1#' /usr/local/php/etc/php.ini
+    sed -i "/^\[opcache\]/a\zend_extension=/usr/local/php/lib/php/extensions/no-debug-non-zts-20121212/opcache.so" /usr/local/php/etc/php.ini
+
     cp -f /usr/local/php/etc/php-fpm.conf.default /usr/local/php/etc/php-fpm.conf
     
     # vi /etc/php/php-fpm.conf
