@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# description    Install nginx1.4.3 & mysql5.6.14 & php5.5.5 on CentOS6.4
+# description    Install nginx1.4.4 & mysql5.6.14 & php5.5.6 on CentOS6.4
 # author         LiCunchang(printf@live.com)
 # version        2.0.20130810
 
@@ -142,12 +142,11 @@ pid-file                       = /data/mysql/mysql.pid
 
 # MyISAM #
 key-buffer-size                = 32M
-myisam-recover                 = FORCE,BACKUP
+myisam-recover-options         = FORCE,BACKUP
 
 # SAFETY #
 max-allowed-packet             = 16M
 max-connect-errors             = 1000000
-skip-name-resolve
 sql-mode                       = STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_AUTO_VALUE_ON_ZERO,NO_ENGINE_SUBSTITUTION,NO_ZERO_DATE,NO_ZERO_IN_DATE,ONLY_FULL_GROUP_BY
 sysdate-is-now                 = 1
 innodb                         = FORCE
@@ -161,6 +160,7 @@ datadir                        = /data/mysql/
 log-bin                        = mysql-bin
 expire-logs-days               = 14
 sync-binlog                    = 1
+binlog_format                  = MIXED
 
 # CACHES AND LIMITS #
 tmp-table-size                 = 32M
@@ -182,6 +182,8 @@ innodb-file-per-table          = 1
 innodb-buffer-pool-size        = 1456M
 
 # LOGGING #
+general-log
+general_log_file               = /data/mysql/mysql-log.log
 log-error                      = /data/mysql/mysql-error.log
 log_warnings                   = 1
 log-queries-not-using-indexes  = 1
@@ -202,7 +204,7 @@ server-id                      = 1
 
 [mysql]
 no-auto-rehash
-safe-updates
+#safe-updates
 EOF
     
     # local memory_free="$(free -m | grep Mem | awk '{print $4}')"
@@ -247,7 +249,7 @@ EOF
 }
 
 ################################################################################
-# Install php-5.5.5
+# Install php-5.5.6
 # Globals:
 #   None
 # Arguments:
@@ -330,9 +332,9 @@ php::install() {
         fi
     fi
 
-    if [[ -d "/usr/local/src/php-5.5.5" ]]; then
+    if [[ -d "/usr/local/src/php-5.5.6" ]]; then
         echo "install php from source"
-        cd /usr/local/src/php-5.5.5/ || { logger::error "Can't read /usr/local/src/php-5.5.5/."; exit 1; }
+        cd /usr/local/src/php-5.5.6/ || { logger::error "Can't read /usr/local/src/php-5.5.6/."; exit 1; }
         ./configure --prefix=/usr/local/php \
                     --with-config-file-path=/usr/local/php/etc \
                     --enable-bcmath \
@@ -367,12 +369,12 @@ php::install() {
         make
         make install
     else
-        logger::error "/usr/local/src/php-5.5.5 was not fonnd"
+        logger::error "/usr/local/src/php-5.5.6 was not fonnd"
         exit 1
     fi
     
     echo "create /etc/php.ini"
-    cp -f /usr/local/src/php-5.5.5/php.ini-production /usr/local/php/etc/php.ini
+    cp -f /usr/local/src/php-5.5.6/php.ini-production /usr/local/php/etc/php.ini
     rm -rf /etc/php.ini
 
     # vi /usr/local/php/etc/php.ini
@@ -430,7 +432,7 @@ php::install() {
     fi
 
     echo "create php init script"
-    cp -f /usr/local/src/php-5.5.5/sapi/fpm/init.d.php-fpm /data/init.d/php-fpm
+    cp -f /usr/local/src/php-5.5.6/sapi/fpm/init.d.php-fpm /data/init.d/php-fpm
     
     chmod 755 /data/init.d/php-fpm
     
@@ -442,7 +444,7 @@ php::install() {
 }
 
 ################################################################################
-# Install nginx-1.4.3
+# Install nginx-1.4.4
 # Globals:
 #   None
 # Arguments:
@@ -496,12 +498,12 @@ nginx::install() {
         exit 1
     fi
     
-    if [[ -d "/usr/local/src/nginx-1.4.3" ]]; then
+    if [[ -d "/usr/local/src/nginx-1.4.4" ]]; then
         echo "install nginx from source"
-        cd /usr/local/src/nginx-1.4.3 || { logger::error "Can't read /usr/local/src/nginx-1.4.3."; exit 1; }
+        cd /usr/local/src/nginx-1.4.4 || { logger::error "Can't read /usr/local/src/nginx-1.4.4."; exit 1; }
         
         sed -i 's/nginx\b/Microsoft-IIS/g' ./src/core/nginx.h
-        sed -i 's/1.4.3/7.5/' ./src/core/nginx.h
+        sed -i 's/1.4.4/7.5/' ./src/core/nginx.h
         sed -i 's/Server: nginx/Server: Microsoft-IIS/' ./src/http/ngx_http_header_filter_module.c
         sed -i 's/>nginx</>Microsoft-IIS</' ./src/http/ngx_http_special_response.c
         
@@ -518,7 +520,7 @@ nginx::install() {
         make
         make install
     else
-        logger::error "/usr/local/src/nginx-1.4.3 was not fonnd"
+        logger::error "/usr/local/src/nginx-1.4.4 was not fonnd"
         exit 1
     fi
 
@@ -615,7 +617,7 @@ EOF
     
     cat > /usr/local/nginx/conf/servers/www.licunchang.com.conf <<'EOF'
 server {
-    listen  80  default_server; 
+    listen  80  default_server;
     server_name  www.licunchang.com;
     
     root   /data/web/www.licunchang.com;
@@ -1252,11 +1254,11 @@ main() {
     echo "└─────────────────────────────────────────────────────────────────┘"
     echo ""
 
-    # 01 nginx-1.4.3.tar.gz
+    # 01 nginx-1.4.4.tar.gz
     # 02 openssl-1.0.1e.tar.gz
     # 03 pcre-8.33.tar.gz
     # 04 mysql-5.6.14.tar.gz
-    # 05 php-5.5.5.tar.gz
+    # 05 php-5.5.6.tar.gz
     # 06 libiconv-1.14.tar.gz
     # 07 mcrypt-2.6.8.tar.gz
     # 08 mhash-0.9.9.9.tar.gz
@@ -1266,11 +1268,11 @@ main() {
     # 12 percona-xtrabackup-2.1.4.tar.gz
     # 13 * mysql-5.5.17.tar.gz(for xtrabackup)
 
-    PACKAGES[0]="nginx-1.4.3.tar.gz"
+    PACKAGES[0]="nginx-1.4.4.tar.gz"
     PACKAGES[1]="openssl-1.0.1e.tar.gz"
     PACKAGES[2]="pcre-8.33.tar.gz"
     PACKAGES[3]="mysql-5.6.14.tar.gz"
-    PACKAGES[4]="php-5.5.5.tar.gz"
+    PACKAGES[4]="php-5.5.6.tar.gz"
     PACKAGES[5]="libiconv-1.14.tar.gz"
     PACKAGES[6]="mcrypt-2.6.8.tar.gz"
     PACKAGES[7]="mhash-0.9.9.9.tar.gz"
@@ -1363,13 +1365,13 @@ EOF
     fi
 
     #php
-    if [[ -d "/usr/local/src/php-5.5.5" ]]; then
+    if [[ -d "/usr/local/src/php-5.5.6" ]]; then
         echo "php::install"
         php::install
     fi
 
     #nginx
-    if [[ -d "/usr/local/src/nginx-1.4.3" ]]; then
+    if [[ -d "/usr/local/src/nginx-1.4.4" ]]; then
         echo "nginx::install"
         nginx::install
     fi

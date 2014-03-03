@@ -15,14 +15,6 @@ GMT UTC DST 等时间标准简介
 
 《HTTP权威指南》读书笔记
 
-### mysql-character-set-collation.md
-
-MySQL Character Set & Collation 介绍
-
-### mysql-or-innodb-restrictions.md
-
-MySQL 和 InnoDB 中的一些最大值/最小值限制
-
 ### mysql-user-defined-variables-example-1.md
 
 MySQL 用户自定义变量示例一则
@@ -44,10 +36,6 @@ SQL 中的 join 语法
 Vim 字行宽度 80 设置
 
 ## shell
-
-### lamp.sh
-
-LAMP (Linux:CentOS6.4 + Apache + MySQL + PHP) 安装脚本
 
 ### lnmp.sh
 
