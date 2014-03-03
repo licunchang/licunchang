@@ -46,7 +46,7 @@ prepare() {
 # install percona-xtrabackup-2.0.5.tar.gz
 xtrabackup() {
 
-    yum -y install cmake gcc gcc-c++ patch libaio libaio-devel automake autoconf bzr bison libtool ncurses-devel zlib-devel perl-Time-HiRes
+    yum -y install cmake gcc gcc-c++ patch libaio libaio-devel automake autoconf bzr bison libtool ncurses-devel zlib-devel perl-Time-HiRes perl-DBD-MySQL
     
     cd /usr/local/src
     
@@ -120,7 +120,7 @@ redis() {
 
     cd /usr/local/src
 
-    source_file=/usr/local/src/redis-2.6.11.tar.gz
+    source_file=/usr/local/src/redis-2.6.16.tar.gz
     
     if [ -f $source_file ]; then
         tar zxvf $source_file
@@ -129,19 +129,19 @@ redis() {
         exit 6
     fi
 
-    cd /usr/local/src/redis-2.6.11
+    cd /usr/local/src/redis-2.6.16
     make
-    make install
+    make PREFIX=/usr/local/redis install
 
     mkdir -p /usr/local/redis/bin /usr/local/redis/conf
 
     cp /usr/local/bin/redis* /usr/local/redis/bin/
-    cp /usr/local/src/redis-2.6.11/redis.conf /usr/local/redis/conf/
+    cp /usr/local/src/redis-2.6.16/redis.conf /usr/local/redis/conf/
     cp /usr/local/redis/conf/redis.conf /usr/local/redis/conf/redis.conf_licunchang.bak
 
     sed -i 's/^daemonize no/daemonize yes/' /usr/local/redis/conf/redis.conf
 
-    cat > /data/scripts/redis <<'EOF'
+    cat > /data/init.d/redis <<'EOF'
 #!/bin/bash
 #
 # Simple Redis init.d script conceived to work on Linux systems
@@ -193,7 +193,7 @@ case "$1" in
 esac
 EOF
     
-    chmod 755 /data/scripts/redis
+    chmod 755 /data/init.d/redis
 
     return $?
 }
