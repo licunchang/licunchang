@@ -506,7 +506,7 @@ nginx::install() {
         ./configure --with-http_stub_status_module \
                     --with-http_gzip_static_module \
                     --with-http_ssl_module \
-                    --with-openssl=/usr/local/src/openssl-1.0.1e \
+                    --with-openssl=/usr/local/src/openssl-1.0.1g \
                     --user="${nginx_user}" \
                     --group="${nginx_group}" \
                     --prefix=/usr/local/nginx \
@@ -1249,7 +1249,7 @@ main() {
     echo ""
 
     # 01 nginx-1.4.7.tar.gz
-    # 02 openssl-1.0.1e.tar.gz
+    # 02 openssl-1.0.1g.tar.gz
     # 03 pcre-8.33.tar.gz
     # 04 mysql-5.6.17.tar.gz
     # 05 php-5.5.11.tar.gz
@@ -1263,7 +1263,7 @@ main() {
     # 13 * mysql-5.5.17.tar.gz(for xtrabackup)
 
     PACKAGES[0]="nginx-1.4.7.tar.gz"
-    PACKAGES[1]="openssl-1.0.1e.tar.gz"
+    PACKAGES[1]="openssl-1.0.1g.tar.gz"
     PACKAGES[2]="pcre-8.33.tar.gz"
     PACKAGES[3]="mysql-5.6.17.tar.gz"
     PACKAGES[4]="php-5.5.11.tar.gz"
