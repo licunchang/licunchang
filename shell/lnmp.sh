@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# description    Install nginx1.4.4 & mysql5.6.14 & php5.5.6 on CentOS6.4
+# description    Install nginx1.4.7 & mysql5.6.17 & php5.5.11 on CentOS6.4
 # author         LiCunchang(printf@live.com)
-# version        2.0.20130810
+# version        3.0.20130810
 
 ################################################################################
 # Put error messages to STDERR.
@@ -36,7 +36,7 @@ trap::interrupt() {
 }
 
 ################################################################################
-# Install mysql-5.6.14
+# Install mysql-5.6.17
 # Globals:
 #   None
 # Arguments:
@@ -60,7 +60,6 @@ mysql::install() {
         /usr/sbin/groupadd -r mysql
         if [[ "$?" -ne 0 ]]; then
             logger::error "can't create a group for mysql"
-            exit 1
         else
             mysql_group="mysql"
         fi
@@ -71,7 +70,6 @@ mysql::install() {
         /usr/sbin/useradd -g mysql -M -r -s /bin/false mysql
         if [[ "$?" -ne 0 ]]; then
             logger::error "can't create a user for mysql"
-            exit 1
         else
             mysql_user="mysql"
         fi
@@ -80,21 +78,21 @@ mysql::install() {
     # Create the mysql data directory: /data/mysql
     echo "create mysql data directory"
     mkdir -p /data/mysql
-    chown -R mysql:mysql /data/mysql
+    chown -R "${mysql_user}":"${mysql_group}" /data/mysql
 
     # Create the mysql conf directory: /etc/mysql
     echo "create mysql conf directory"
     mkdir -p /etc/mysql
-    chown -R mysql:mysql /etc/mysql
+    chown -R "${mysql_user}":"${mysql_group}" /etc/mysql
 
-    if [[ -d "/usr/local/src/mysql-5.6.14" ]]; then
+    if [[ -d "/usr/local/src/mysql-5.6.17" ]]; then
         echo "install mysql from source"
-        cd /usr/local/src/mysql-5.6.14 || { echo "Can't read /usr/local/src/mysql-5.6.14."; exit 1; }
-        cmake /usr/local/src/mysql-5.6.14/ -DCMAKE_INSTALL_PREFIX=/usr/local/mysql \
+        cd /usr/local/src/mysql-5.6.17 || logger::error "Can't read /usr/local/src/mysql-5.6.16."
+        cmake /usr/local/src/mysql-5.6.17/ -DCMAKE_INSTALL_PREFIX=/usr/local/mysql \
                                            -DMYSQL_DATADIR=/data/mysql \
                                            -DSYSCONFDIR=/etc/mysql \
                                            -DDEFAULT_CHARSET=utf8 \
-                                           -DDEFAULT_COLLATION=utf8_general_ci \
+                                           -DDEFAULT_COLLATION=utf8_unicode_ci \
                                            -DWITH_EXTRA_CHARSETS=all \
                                            -DWITH_INNOBASE_STORAGE_ENGINE=1 \
                                            -DWITH_ARCHIVE_STORAGE_ENGINE=1 \
@@ -106,16 +104,16 @@ mysql::install() {
                                            -DWITH_READLINE=1 \
                                            -DENABLED_LOCAL_INFILE=1 \
                                            -DENABLED_PROFILING=1 \
-                                           -DMYSQL_TCP_PORT=3306
+                                           -DMYSQL_TCP_PORT=3360 \
+                                           -DWITH_INNODB_MEMCACHED=1
         make
         make install
     else
-        logger::error "/usr/local/src/mysql-5.6.14 was not fonnd"
-        exit 1
+        logger::error "/usr/local/src/mysql-5.6.17 was not fonnd"
     fi
 
     echo "install mysql db"
-    cd /usr/local/mysql/ || { echo "Can't read /usr/local/mysql/."; exit 1; }
+    cd /usr/local/mysql/ || logger::error "Can't read /usr/local/mysql/."
     /usr/local/mysql/scripts/mysql_install_db --user="${mysql_user}" \
                                               --basedir=/usr/local/mysql \
                                               --datadir=/data/mysql
@@ -209,13 +207,13 @@ EOF
     
     # local memory_free="$(free -m | grep Mem | awk '{print $4}')"
     # if [[ "${memory_free}" -le 128 ]]; then
-    #    cp -f /usr/local/src/mysql-5.6.14/support-files/my-medium.cnf \
+    #    cp -f /usr/local/src/mysql-5.6.17/support-files/my-medium.cnf \
     #          /etc/mysql/my.cnf
     # fi
 
     echo "create mysql init script"
     mkdir -p /data/init.d/
-    cp -f /usr/local/mysql/support-files/mysql.server /data/init.d/mysql
+    cp -f /usr/local/mysql/support-files/mysql.server /data/init.d/mysql || logger::error "Can't copy /data/init.d/mysql."
     sed -i 's#^basedir=$#basedir=/usr/local/mysql#' /data/init.d/mysql
     sed -i 's#^datadir=$#datadir=/data/mysql#' /data/init.d/mysql
     chmod 755 /data/init.d/mysql
@@ -224,19 +222,19 @@ EOF
     /data/init.d/mysql start
     
     echo "mysql secure"
-
-    cd /usr/local/mysql/ || { logger::error "Can't read /usr/local/mysql."; exit 1; }
+    cd /usr/local/mysql/ || logger::error "Can't read /usr/local/mysql."
     /usr/local/mysql/bin/mysql_secure_installation <<'EOF'
 
 y
-root
-root
+f53eb807a3de30421188034dbb9c4fc2
+f53eb807a3de30421188034dbb9c4fc2
 y
 y
 y
 y
 EOF
-    
+    # the password is md5('root.password').
+
     echo "iptables [port:3306]"
     #vi /etc/sysconfig/iptables
     sed -i '/^-A INPUT -i lo -j ACCEPT$/a\
@@ -249,7 +247,7 @@ EOF
 }
 
 ################################################################################
-# Install php-5.5.6
+# Install php-5.5.11
 # Globals:
 #   None
 # Arguments:
@@ -265,38 +263,38 @@ php::install() {
         libxml2-devel curl-devel libjpeg-devel libpng-devel freetype-devel
 
     echo "re2c install"
-    cd /usr/local/src/re2c-0.13.6 || { logger::error "Can't read /usr/local/src/re2c-0.13.6."; exit 1; }
+    cd /usr/local/src/re2c-0.13.6 || logger::error "Can't read /usr/local/src/re2c-0.13.6."
     ./configure
     make
     make install
 
     echo "libiconv install"
-    cd /usr/local/src/libiconv-1.14 || { logger::error "Can't read /usr/local/src/libiconv-1.14."; exit 1; }
+    cd /usr/local/src/libiconv-1.14 || logger::error "Can't read /usr/local/src/libiconv-1.14."
     ./configure --prefix=/usr/local/libiconv
     make
     libtool --finish /usr/local/libiconv/lib
     make install
     
     echo "libmcrypt install"
-    cd /usr/local/src/libmcrypt-2.5.8 || { logger::error "Can't read /usr/local/src/libmcrypt-2.5.8."; exit 1; }
+    cd /usr/local/src/libmcrypt-2.5.8 || logger::error "Can't read /usr/local/src/libmcrypt-2.5.8."
     ./configure --prefix=/usr/local/libmcrypt
     make
     make install
 
     echo "libmcrypt libltdl install"
-    cd /usr/local/src/libmcrypt-2.5.8/libltdl || { logger::error "Can't read /usr/local/src/libmcrypt-2.5.8/libltdl."; exit 1; }
+    cd /usr/local/src/libmcrypt-2.5.8/libltdl || logger::error "Can't read /usr/local/src/libmcrypt-2.5.8/libltdl."
     ./configure --enable-ltdl-install
     make
     make install
     
     echo "mhash install"
-    cd /usr/local/src/mhash-0.9.9.9 || { logger::error "Can't read /usr/local/src/mhash-0.9.9.9."; exit 1; }
+    cd /usr/local/src/mhash-0.9.9.9 || logger::error "Can't read /usr/local/src/mhash-0.9.9.9."
     ./configure --prefix=/usr/local/mhash
     make
     make install
     
     echo "mcrypt install"
-    cd /usr/local/src/mcrypt-2.6.8 || { logger::error "Can't read /usr/local/src/mcrypt-2.6.8."; exit 1; }
+    cd /usr/local/src/mcrypt-2.6.8 || logger::error "Can't read /usr/local/src/mcrypt-2.6.8."
     export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/libmcrypt/lib:/usr/local/mhash/lib
     export LDFLAGS="-L/usr/local/mhash/lib/ -I/usr/local/mhash/include/"
     export CFLAGS="-I/usr/local/mhash/include/"
@@ -315,7 +313,6 @@ php::install() {
         /usr/sbin/groupadd -r www
         if [[ "$?" -ne 0 ]]; then
             logger::error "can't create a group for php-fpm"
-            exit 1
         else
             php_group="www"
         fi
@@ -326,15 +323,14 @@ php::install() {
         /usr/sbin/useradd -g www -M -r -s /bin/false www
         if [[ "$?" -ne 0 ]]; then
             logger::error "can't create a user for php-fpm"
-            exit 1
         else
             php_user="www"
         fi
     fi
 
-    if [[ -d "/usr/local/src/php-5.5.6" ]]; then
+    if [[ -d "/usr/local/src/php-5.5.11" ]]; then
         echo "install php from source"
-        cd /usr/local/src/php-5.5.6/ || { logger::error "Can't read /usr/local/src/php-5.5.6/."; exit 1; }
+        cd /usr/local/src/php-5.5.11/ || logger::error "Can't read /usr/local/src/php-5.5.9/."
         ./configure --prefix=/usr/local/php \
                     --with-config-file-path=/usr/local/php/etc \
                     --enable-bcmath \
@@ -360,21 +356,20 @@ php::install() {
                     --with-fpm-user="${php_user}" \
                     --with-fpm-group="${php_group}" \
                     --with-zlib \
-                    --with-iconv-dir=/usr/local/libiconv/ \
+                    --with-iconv-dir=/usr/local/libiconv \
                     --with-pcre-dir=/usr/local/pcre \
                     --with-libxml-dir \
-                    --with-mcrypt=/usr/local/libmcrypt/ \
-                    --with-mhash=/usr/local/mhash/ \
+                    --with-mcrypt=/usr/local/libmcrypt \
+                    --with-mhash=/usr/local/mhash \
                     --disable-ipv6
         make
         make install
     else
-        logger::error "/usr/local/src/php-5.5.6 was not fonnd"
-        exit 1
+        logger::error "/usr/local/src/php-5.5.11 was not fonnd"
     fi
     
     echo "create /etc/php.ini"
-    cp -f /usr/local/src/php-5.5.6/php.ini-production /usr/local/php/etc/php.ini
+    cp -f /usr/local/src/php-5.5.11/php.ini-production /usr/local/php/etc/php.ini || logger::error "Can't read /usr/local/php/etc/php.ini."
     rm -rf /etc/php.ini
 
     # vi /usr/local/php/etc/php.ini
@@ -384,12 +379,15 @@ php::install() {
     sed -i 's#^session.name = PHPSESSID#session.name = JSESSIONID#' /usr/local/php/etc/php.ini
     sed -i 's#^;session.save_path#session.save_path#' /usr/local/php/etc/php.ini
     
+    sed -i '/^; extension_dir = "\.\/"$/a\
+extension_dir=/usr/local/php/lib/php/extensions/no-debug-non-zts-20121212/' /usr/local/php/etc/php.ini
+
     # [opcache]
     sed -i 's#^;opcache.enable=0#opcache.enable=1#' /usr/local/php/etc/php.ini
     sed -i 's#^;opcache.enable_cli=0#opcache.enable_cli=1#' /usr/local/php/etc/php.ini
     sed -i "/^\[opcache\]/a\zend_extension=/usr/local/php/lib/php/extensions/no-debug-non-zts-20121212/opcache.so" /usr/local/php/etc/php.ini
 
-    cp -f /usr/local/php/etc/php-fpm.conf.default /usr/local/php/etc/php-fpm.conf
+    cp -f /usr/local/php/etc/php-fpm.conf.default /usr/local/php/etc/php-fpm.conf || logger::error "Can't read /usr/local/php/etc/php-fpm.conf."
     
     # vi /etc/php/php-fpm.conf
     # pid = run/php-fpm.pid
@@ -432,7 +430,7 @@ php::install() {
     fi
 
     echo "create php init script"
-    cp -f /usr/local/src/php-5.5.6/sapi/fpm/init.d.php-fpm /data/init.d/php-fpm
+    cp -f /usr/local/src/php-5.5.11/sapi/fpm/init.d.php-fpm /data/init.d/php-fpm
     
     chmod 755 /data/init.d/php-fpm
     
@@ -444,7 +442,7 @@ php::install() {
 }
 
 ################################################################################
-# Install nginx-1.4.4
+# Install nginx-1.4.7
 # Globals:
 #   None
 # Arguments:
@@ -465,7 +463,6 @@ nginx::install() {
         /usr/sbin/groupadd -r www
         if [[ "$?" -ne 0 ]]; then
             logger::error "can't create a group for nginx"
-            exit 1
         else
             nginx_group="www"
         fi
@@ -476,7 +473,6 @@ nginx::install() {
         /usr/sbin/useradd -g www -M -r -s /bin/false www
         if [[ "$?" -ne 0 ]]; then
             logger::error "can't create a user for nginx"
-            exit 1
         else
             nginx_user="www"
         fi
@@ -484,7 +480,7 @@ nginx::install() {
     
     if [[ -d "/usr/local/src/pcre-8.33" ]]; then
         echo "install pcre from source"
-        cd /usr/local/src/pcre-8.33 || { logger::error "Can't read /usr/local/src/pcre-8.33."; exit 1; }
+        cd /usr/local/src/pcre-8.33 || logger::error "Can't read /usr/local/src/pcre-8.33."
         ./configure --prefix=/usr/local/pcre \
                     --enable-utf \
                     --enable-pcre16 \
@@ -498,12 +494,12 @@ nginx::install() {
         exit 1
     fi
     
-    if [[ -d "/usr/local/src/nginx-1.4.4" ]]; then
+    if [[ -d "/usr/local/src/nginx-1.4.7" ]]; then
         echo "install nginx from source"
-        cd /usr/local/src/nginx-1.4.4 || { logger::error "Can't read /usr/local/src/nginx-1.4.4."; exit 1; }
+        cd /usr/local/src/nginx-1.4.7 || logger::error "Can't read /usr/local/src/nginx-1.4.7."
         
         sed -i 's/nginx\b/Microsoft-IIS/g' ./src/core/nginx.h
-        sed -i 's/1.4.4/7.5/' ./src/core/nginx.h
+        sed -i 's/1.4.7/7.5/' ./src/core/nginx.h
         sed -i 's/Server: nginx/Server: Microsoft-IIS/' ./src/http/ngx_http_header_filter_module.c
         sed -i 's/>nginx</>Microsoft-IIS</' ./src/http/ngx_http_special_response.c
         
@@ -520,8 +516,7 @@ nginx::install() {
         make
         make install
     else
-        logger::error "/usr/local/src/nginx-1.4.4 was not fonnd"
-        exit 1
+        logger::error "/usr/local/src/nginx-1.4.7 was not fonnd"
     fi
 
     echo "optimize nginx config"
@@ -657,6 +652,7 @@ server {
         
         add_header Cache-Control no-cache;
         add_header Cache-Control private;
+        add_header Cache-Control must-revalidate;
     }
 
     location ~ /\. {
@@ -1037,6 +1033,8 @@ case "$1" in
 esac
 exit $?
 EOF
+    
+    chown "${nginx_user}":"${nginx_group}" /usr/local/nginx/logs  -R
 
     echo "start nginx"
     chmod 755 /data/init.d/nginx
@@ -1145,25 +1143,21 @@ EOF
 ################################################################################
 xdebug::install() {
 
-    cd /usr/local/src/ || { logger::error "Can't read /usr/local/src."; exit 1; }
+    cd /usr/local/src/ || logger::error "Can't read /usr/local/src."
     tar -xzf xdebug-2.2.3.tgz
-    cd /usr/local/src/xdebug-2.2.3/ || { logger::error "Can't read /usr/local/src/xdebug-2.2.3/."; exit 1; }
+    cd /usr/local/src/xdebug-2.2.3/ || logger::error "Can't read /usr/local/src/xdebug-2.2.3/."
     /usr/local/php/bin/phpize
     ./configure --enable-xdebug --with-php-config=/usr/local/php/bin/php-config
     make
     make install
-    
-    mkdir -p /usr/local/php/ext/
-    mv /usr/local/php/lib/php/extensions/no-debug-non-zts-20121212/xdebug.so /usr/local/php/ext/
-
-    sed -i '/^; extension_dir = "\.\/"$/a\
-extension_dir = /usr/local/php/ext/' /usr/local/php/etc/php.ini
-
     sed -i '/^; Local Variables:$/i\
 [xdebug]\
-zend_extension="/usr/local/php/ext/xdebug.so"\
+zend_extension="/usr/local/php/lib/php/extensions/no-debug-non-zts-20121212/xdebug.so"\
 xdebug.default_enable=1\
 xdebug.auto_profile=1\
+xdebug.trace_output_dir="/tmp"\
+xdebug.profiler_output_dir="/tmp"\
+xdebug.profiler_enable_trigger=1\
 ' /usr/local/php/etc/php.ini
 
     /data/init.d/php-fpm restart
@@ -1254,11 +1248,11 @@ main() {
     echo "└─────────────────────────────────────────────────────────────────┘"
     echo ""
 
-    # 01 nginx-1.4.4.tar.gz
+    # 01 nginx-1.4.7.tar.gz
     # 02 openssl-1.0.1e.tar.gz
     # 03 pcre-8.33.tar.gz
-    # 04 mysql-5.6.14.tar.gz
-    # 05 php-5.5.6.tar.gz
+    # 04 mysql-5.6.17.tar.gz
+    # 05 php-5.5.11.tar.gz
     # 06 libiconv-1.14.tar.gz
     # 07 mcrypt-2.6.8.tar.gz
     # 08 mhash-0.9.9.9.tar.gz
@@ -1268,11 +1262,11 @@ main() {
     # 12 percona-xtrabackup-2.1.4.tar.gz
     # 13 * mysql-5.5.17.tar.gz(for xtrabackup)
 
-    PACKAGES[0]="nginx-1.4.4.tar.gz"
+    PACKAGES[0]="nginx-1.4.7.tar.gz"
     PACKAGES[1]="openssl-1.0.1e.tar.gz"
     PACKAGES[2]="pcre-8.33.tar.gz"
-    PACKAGES[3]="mysql-5.6.14.tar.gz"
-    PACKAGES[4]="php-5.5.6.tar.gz"
+    PACKAGES[3]="mysql-5.6.17.tar.gz"
+    PACKAGES[4]="php-5.5.11.tar.gz"
     PACKAGES[5]="libiconv-1.14.tar.gz"
     PACKAGES[6]="mcrypt-2.6.8.tar.gz"
     PACKAGES[7]="mhash-0.9.9.9.tar.gz"
@@ -1281,14 +1275,13 @@ main() {
 
     readonly PACKAGES
 
-    cd /usr/local/src || { logger::error "Can't read /usr/local/src."; exit 1; }
+    cd /usr/local/src || logger::error "Can't read /usr/local/src."
     for package in ${PACKAGES[@]}; do
         if [[ -f "${package}" ]]; then
             echo "unzip ${package}"
-            tar zxf "${package}" || { logger::error "tar:${package}"; exit 1; }
+            tar zxf "${package}" || logger::error "tar:${package}"
         else
             logger::error "/usr/local/src/${package} was not found."
-            exit 1
         fi
     done
 
@@ -1304,7 +1297,7 @@ main() {
     #           |-/nginx
     #       |-/backup
     #           |-/mysql
-    #           |-/app
+    #           |-/application
     #       |-/cron
     #       |-/init.d
 
@@ -1359,19 +1352,19 @@ EOF
     yum -y install make cmake gcc gcc-c++ chkconfig automake autoconf libtool
 
     #MySQL
-    if [[ -d "/usr/local/src/mysql-5.6.14" ]]; then
+    if [[ -d "/usr/local/src/mysql-5.6.17" ]]; then
         echo "mysql::install"
         mysql::install
     fi
 
     #php
-    if [[ -d "/usr/local/src/php-5.5.6" ]]; then
+    if [[ -d "/usr/local/src/php-5.5.11" ]]; then
         echo "php::install"
         php::install
     fi
 
     #nginx
-    if [[ -d "/usr/local/src/nginx-1.4.4" ]]; then
+    if [[ -d "/usr/local/src/nginx-1.4.7" ]]; then
         echo "nginx::install"
         nginx::install
     fi
@@ -1394,5 +1387,8 @@ EOF
         redis::install
     fi
 }
+
+set -o nounset
+set -o errexit
 
 main "$@"
