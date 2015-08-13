@@ -1,0 +1,25 @@
+20个Nginx Web服务器最佳安全实践
+
+[Nginx Rewrite研究笔记](http://blog.cafeneko.info/2010/10/nginx_rewrite_note/)
+
+http://xiaoxinzhou.blog.163.com/
+
+1.龙书(Dragon book)
+书名是Compilers: Principles,Techniques,and Tools
+作者是：Alfred V.Aho,Ravi Sethi,Jeffrey D.Ullman
+国内所有的编译原理教材都是抄的它的，而且只是抄了最简单的前端的一些内容。
+龙书中文版第一版下载 ：http://u.115.com/file/f7f9b772be
+龙书英文版第二版下载：http://u.115.com/file/f7d03acd78
+
+2.鲸书(Whale book)
+书名是：Advanced Compiler Design and Implementation
+作者是：Steven S.Muchnick
+也就是高级编译原理，象什么陈意云之类的估计也就是这个水平不错了
+鲸书中文版：http://u.115.com/file/f763340b5e
+鲸书英文版：http://u.115.com/file/f7acb0fcde
+
+3.虎书(Tiger book)
+书名是：Modern Compiler Implementation in Java/C++/ML,Second Edition
+作者是：Andrew W.Appel,with Jens Palsberg
+这本书是3本书中最薄的一本，也是最最牛的一本！
+虎书中文版：http://u.115.com/file/f7f4984a86

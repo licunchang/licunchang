@@ -1,0 +1,13 @@
+keytool -genkey -alias speechocean -keyalg RSA -keysize 1024 -keypass speechocean -validity 365 -keystore C:\speechocean.keystore -storepass speechocean
+
+
+keytool -export -alias speechocean -keystore C:\speechocean.keystore -file C:\speechocean.crt -storepass speechocean
+
+keytool -import -keystore %JAVA_HOME%\jre\lib\security\cacerts -file C:\speechocean.crt -alias speechocean
+
+changeit
+
+    <Connector port="8443" protocol="HTTP/1.1" SSLEnabled="true"
+               maxThreads="150" scheme="https" secure="true"
+               keystoreFile="C:/speechocean.keystore" keystorePass="speechocean"
+               clientAuth="false" sslProtocol="TLS" />

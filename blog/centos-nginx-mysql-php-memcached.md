@@ -83,7 +83,15 @@
 
 MySQL 的 bin-log 是顺序写日志，需要提供较高的顺序写能力，MySQL 的数据日志需要提供较高的随机读写能力。与此同时，有条件的情况下将 bin-log 和数据文件分开存储是有益处的，而事务日志则可以和数据文件存放在一起。
 
-### 2.3 源码安装
+### 2.3 安装
+
+官方提供了 YUM 安装源
+
+    wget http://dev.mysql.com/get/mysql-community-release-el6-5.noarch.rpm
+    rpm -Uvh mysql-community-release-el6-5.noarch.rpm
+    yum install mysql-community-server mysql-community-client mysql-community-common
+
+或者使用源码安装
 
     cd /usr/local/src
     tar zxvf /usr/local/src/mysql-5.6.13.tar.gz
@@ -321,6 +329,10 @@ MySQL 提供了一个脚本在安装初期修改密码的脚本，执行脚本�
     
 ### 3.4 安装 php
 
+    wget http://dl.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm
+    wget http://rpms.famillecollet.com/enterprise/remi-release-6.rpm
+    rpm -Uvh remi-release-6*.rpm epel-release-6*.rpm
+
     cd /usr/local/src
     tar zxvf re2c-0.13.6.tar.gz
     cd /usr/local/src/re2c-0.13.6
@@ -450,6 +462,18 @@ pm 这几个选项在 php-fpm.conf 中有详细的功能描述，不清楚的可
     service php-fpm start
 
 ## 4 Nginx
+
+官方提供了 YUM 的安装方式，新建`/etc/yum.repos.d/nginx.repo`源
+
+    [nginx]
+    name=nginx repo
+    baseurl=http://nginx.org/packages/centos/$releasever/$basearch/
+    gpgcheck=0
+    enabled=1
+
+之后就可以通过yum的方式进行安装了
+
+    yum install nginx
 
 ### 4.1 安装 pcre
 

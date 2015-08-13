@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# description    Install nginx1.4.7 & mysql5.6.17 & php5.5.11 on CentOS6.4
+# description    Install nginx1.4.7 & mysql5.6.17 & php5.5.11 on CentOS6.*
 # author         LiCunchang(printf@live.com)
 # version        3.0.20130810
 
@@ -101,7 +101,6 @@ mysql::install() {
                                            -DWITH_PARTITION_STORAGE_ENGINE=1 \
                                            -DWITHOUT_EXAMPLE_STORAGE_ENGINE=1 \
                                            -DWITHOUT_FEDERATED_STORAGE_ENGINE=1 \
-                                           -DWITH_READLINE=1 \
                                            -DENABLED_LOCAL_INFILE=1 \
                                            -DENABLED_PROFILING=1 \
                                            -DMYSQL_TCP_PORT=3360 \
@@ -247,7 +246,7 @@ EOF
 }
 
 ################################################################################
-# Install php-5.5.11
+# Install php-5.5.12
 # Globals:
 #   None
 # Arguments:
@@ -328,9 +327,9 @@ php::install() {
         fi
     fi
 
-    if [[ -d "/usr/local/src/php-5.5.11" ]]; then
+    if [[ -d "/usr/local/src/php-5.5.12" ]]; then
         echo "install php from source"
-        cd /usr/local/src/php-5.5.11/ || logger::error "Can't read /usr/local/src/php-5.5.9/."
+        cd /usr/local/src/php-5.5.12/ || logger::error "Can't read /usr/local/src/php-5.5.9/."
         ./configure --prefix=/usr/local/php \
                     --with-config-file-path=/usr/local/php/etc \
                     --enable-bcmath \
@@ -365,11 +364,11 @@ php::install() {
         make
         make install
     else
-        logger::error "/usr/local/src/php-5.5.11 was not fonnd"
+        logger::error "/usr/local/src/php-5.5.12 was not fonnd"
     fi
     
     echo "create /etc/php.ini"
-    cp -f /usr/local/src/php-5.5.11/php.ini-production /usr/local/php/etc/php.ini || logger::error "Can't read /usr/local/php/etc/php.ini."
+    cp -f /usr/local/src/php-5.5.12/php.ini-production /usr/local/php/etc/php.ini || logger::error "Can't read /usr/local/php/etc/php.ini."
     rm -rf /etc/php.ini
 
     # vi /usr/local/php/etc/php.ini
@@ -430,7 +429,7 @@ extension_dir=/usr/local/php/lib/php/extensions/no-debug-non-zts-20121212/' /usr
     fi
 
     echo "create php init script"
-    cp -f /usr/local/src/php-5.5.11/sapi/fpm/init.d.php-fpm /data/init.d/php-fpm
+    cp -f /usr/local/src/php-5.5.12/sapi/fpm/init.d.php-fpm /data/init.d/php-fpm
     
     chmod 755 /data/init.d/php-fpm
     
@@ -478,9 +477,9 @@ nginx::install() {
         fi
     fi
     
-    if [[ -d "/usr/local/src/pcre-8.33" ]]; then
+    if [[ -d "/usr/local/src/pcre-8.35" ]]; then
         echo "install pcre from source"
-        cd /usr/local/src/pcre-8.33 || logger::error "Can't read /usr/local/src/pcre-8.33."
+        cd /usr/local/src/pcre-8.35 || logger::error "Can't read /usr/local/src/pcre-8.35."
         ./configure --prefix=/usr/local/pcre \
                     --enable-utf \
                     --enable-pcre16 \
@@ -490,7 +489,7 @@ nginx::install() {
         make
         make install
     else
-        logger::error "/usr/local/src/pcre-8.33 was not fonnd"
+        logger::error "/usr/local/src/pcre-8.35 was not fonnd"
         exit 1
     fi
     
@@ -510,7 +509,7 @@ nginx::install() {
                     --user="${nginx_user}" \
                     --group="${nginx_group}" \
                     --prefix=/usr/local/nginx \
-                    --with-pcre=/usr/local/src/pcre-8.33 \
+                    --with-pcre=/usr/local/src/pcre-8.35 \
                     --with-http_realip_module \
                     --with-cpu-opt=amd64
         make
@@ -1250,9 +1249,9 @@ main() {
 
     # 01 nginx-1.4.7.tar.gz
     # 02 openssl-1.0.1g.tar.gz
-    # 03 pcre-8.33.tar.gz
+    # 03 pcre-8.35.tar.gz
     # 04 mysql-5.6.17.tar.gz
-    # 05 php-5.5.11.tar.gz
+    # 05 php-5.5.12.tar.gz
     # 06 libiconv-1.14.tar.gz
     # 07 mcrypt-2.6.8.tar.gz
     # 08 mhash-0.9.9.9.tar.gz
@@ -1264,9 +1263,9 @@ main() {
 
     PACKAGES[0]="nginx-1.4.7.tar.gz"
     PACKAGES[1]="openssl-1.0.1g.tar.gz"
-    PACKAGES[2]="pcre-8.33.tar.gz"
+    PACKAGES[2]="pcre-8.35.tar.gz"
     PACKAGES[3]="mysql-5.6.17.tar.gz"
-    PACKAGES[4]="php-5.5.11.tar.gz"
+    PACKAGES[4]="php-5.5.12.tar.gz"
     PACKAGES[5]="libiconv-1.14.tar.gz"
     PACKAGES[6]="mcrypt-2.6.8.tar.gz"
     PACKAGES[7]="mhash-0.9.9.9.tar.gz"
@@ -1307,7 +1306,6 @@ main() {
     # Check that networking is up.
     if [[ "${NETWORKING}" == "no" ]]; then
         logger::error "network is not available."
-        exit 1
     else
         echo "network is working."
     fi
@@ -1329,7 +1327,7 @@ main() {
         fi
     fi
 
-    cd /etc/yum.repos.d || { logger::error "/etc/yum.repos.d"; exit 1; }
+    cd /etc/yum.repos.d || logger::error "/etc/yum.repos.d"
     echo "backup yum sources"
     for repo in ./*.repo; do
         if [[ -e "${repo}" ]]; then
@@ -1358,7 +1356,7 @@ EOF
     fi
 
     #php
-    if [[ -d "/usr/local/src/php-5.5.11" ]]; then
+    if [[ -d "/usr/local/src/php-5.5.12" ]]; then
         echo "php::install"
         php::install
     fi
@@ -1379,12 +1377,6 @@ EOF
     if [[ -f "/usr/local/src/percona-xtrabackup-2.1.4.tar.gz" ]]; then
         echo "xtrabackup::install"
         xtrabackup::install
-    fi
-
-    #redis
-    if [[ -f "/usr/local/src/redis-2.6.16.tar.gz" ]]; then
-        echo "redis::install"
-        redis::install
     fi
 }
 
