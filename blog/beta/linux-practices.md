@@ -32,3 +32,10 @@
 替换前一条命令里的部分字符串。
 
 场景：`echo "wanderful"`，其实是想输出 `echo "wonderful"`。只需要 `^a^o` 就行了，对很长的命令的错误拼写有很大的帮助。
+
+
+
+
+
+http://www.i3s.unice.fr/~jplozi/wastedcores/files/submitted_paper.pdf
+https://blog.acolyer.org/2016/04/26/the-linux-scheduler-a-decade-of-wasted-cores/
