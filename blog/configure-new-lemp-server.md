@@ -319,7 +319,6 @@ r[server-id].domain.com
     upload_max_filesize = 2M
     log_errors = On
     allow_url_fopen = Off
-    cgi.fix_pathinfo = 0
 
 `vi /etc/php-fpm.d/www.conf` 修改 php-fpm 的基本配置
 
@@ -442,20 +441,20 @@ r[server-id].domain.com
         error_page  500 502 503 504  /50x.html;
 
         location ~ \.php$ {
-            try_files  $uri =404;
-
-            limit_except  GET POST {
-                deny   all;
+            fastcgi_split_path_info ^(.+?\.php)(/.*)$;
+            if (!-f $document_root$fastcgi_script_name) {
+                return 404;
             }
+            
+            # limit_except  GET POST {
+            #     deny   all;
+            # }
 
             charset utf-8;
-            fastcgi_split_path_info ^(.+\.php)(.*)$;
-
-            fastcgi_pass   127.0.0.1:9000;
-            fastcgi_index  index.php;
-            fastcgi_param  SCRIPT_FILENAME $document_root$fastcgi_script_name;
-            fastcgi_param  PATH_INFO       $fastcgi_path_info;
-            include        fastcgi_params;
+            
+            fastcgi_pass 127.0.0.1:9000;
+            fastcgi_index index.php;
+            include fastcgi_params;
         }
 
         location ~ .*\.(gif|jpg|jpeg|png|bmp|swf|js|ico|css)$ {
