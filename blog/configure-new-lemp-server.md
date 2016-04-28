@@ -82,7 +82,7 @@ r[server-id].domain.com
 
 ## Update Packages and Kernal
 
-将系统软件内核等更新到最新版本，更新完之后根据情况重启服务器(一般情况下是不需要重启的，如果更新了 kernel ，那么重启之前新 kernel 是不会生效的)
+将系统软件、内核等更新到最新版本：
 
     yum check-update
     yum update
