@@ -271,6 +271,8 @@ r[server-id].domain.com
 初始化数据库
 
     mysql_install_db --user=mysql --datadir=/home/mysql/data
+    
+MySQL 5.7版本中，`mysql_install_db`被弃用，使用`mysqld --initialize`来初始化数据库。
 
 初始化之后启动服务器 `service mysqld start`，设置 MySQL 基本的安全配置修改密码等
 
