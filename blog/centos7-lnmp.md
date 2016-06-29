@@ -15,11 +15,19 @@
 
 ## CentOS Installation
 
-CentOS 6.5 安装，语言相关都设置 English，时区设置 **Asia/Shanghai**，`system clock uses UTC` 选项要勾选，最小化安装完毕后设置时间：
+CentOS 7 安装，语言相关都设置 English，时区设置 **Asia/Shanghai**，安装完毕后设置时间：
 
-    [root@localhost ~]# vi /etc/sysconfig/clock
-    ZONE="Asia/Shanghai"
-    UTC="true"
+> The system time is always kept in Coordinated Universal Time (UTC) and converted in applications to local time as needed.
+
+    [root@localhost sysconfig]# timedatectl 
+          Local time: Wed 2016-06-29 14:20:30 CST
+      Universal time: Wed 2016-06-29 06:20:30 UTC
+            RTC time: Wed 2016-06-29 06:20:30
+           Time zone: Asia/Shanghai (CST, +0800)
+         NTP enabled: n/a
+    NTP synchronized: no
+     RTC in local TZ: no
+          DST active: n/a
     [root@localhost ~]# date --set "07/25/2014 18:10:00"
     Fri Jul 25 18:10:00 CST 2014
     [root@localhost ~]# hwclock --systohc
