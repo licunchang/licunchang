@@ -49,7 +49,13 @@ ORDER BY `data_length` DESC ;
 
 
 
+SELECT @@profiling;
 
+SHOW PROFILES
+
+SHOW PROFILE FOR QUERY 19;
+
+SHOW PROFILE ALL FOR QUERY 19;
 
 
 

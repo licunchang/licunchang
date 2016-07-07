@@ -171,7 +171,7 @@ r[server-id].domain.com
 
 ## Install Nginx PHP MySQL
 
-    yum install jemalloc jemalloc-devel mysql-community-server mysql-community-client mysql-community-common wget nginx php-cli php-fpm php-mysqlnd php-gd php-common php php-pdo php-mbstring php-mcrypt php-opcache
+    yum install jemalloc jemalloc-devel mysql-community-server mysql-community-libs mysql-community-client mysql-community-common wget nginx php-cli php-pecl-memcached php-fpm php-mysqlnd php-gd php-common php php-pdo php-mbstring php-mcrypt php-opcache
 
 ## MySQL Settings
 
