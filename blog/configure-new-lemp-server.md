@@ -82,7 +82,7 @@ r[server-id].domain.com
 
 ## Update Packages and Kernal
 
-将系统软件内核等更新到最新版本，更新完之后根据情况重启服务器(一般情况下是不需要重启的，如果更新了 kernel ，那么重启之前新 kernel 是不会生效的)
+将系统软件、内核等更新到最新版本：
 
     yum check-update
     yum update
@@ -271,6 +271,8 @@ r[server-id].domain.com
 初始化数据库
 
     mysql_install_db --user=mysql --datadir=/home/mysql/data
+    
+> MySQL 5.7.6 版本之后，`mysql_install_db` 被弃用，使用 `mysqld --initialize` 来初始化数据库。
 
 初始化之后启动服务器 `service mysqld start`，设置 MySQL 基本的安全配置修改密码等
 
@@ -319,7 +321,6 @@ r[server-id].domain.com
     upload_max_filesize = 2M
     log_errors = On
     allow_url_fopen = Off
-    cgi.fix_pathinfo = 0
 
 `vi /etc/php-fpm.d/www.conf` 修改 php-fpm 的基本配置
 
@@ -442,20 +443,21 @@ r[server-id].domain.com
         error_page  500 502 503 504  /50x.html;
 
         location ~ \.php$ {
-            try_files  $uri =404;
-
-            limit_except  GET POST {
-                deny   all;
+            fastcgi_split_path_info ^(.+?\.php)(/.*)$;
+            if (!-f $document_root$fastcgi_script_name) {
+                return 404;
             }
+            
+            # limit_except  GET POST {
+            #     deny   all;
+            # }
 
             charset utf-8;
-            fastcgi_split_path_info ^(.+\.php)(.*)$;
-
-            fastcgi_pass   127.0.0.1:9000;
-            fastcgi_index  index.php;
-            fastcgi_param  SCRIPT_FILENAME $document_root$fastcgi_script_name;
-            fastcgi_param  PATH_INFO       $fastcgi_path_info;
-            include        fastcgi_params;
+            
+            fastcgi_pass 127.0.0.1:9000;
+            fastcgi_index index.php;
+            fastcgi_param  SCRIPT_FILENAME    $document_root$fastcgi_script_name;
+            include fastcgi_params;
         }
 
         location ~ .*\.(gif|jpg|jpeg|png|bmp|swf|js|ico|css)$ {
